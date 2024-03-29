@@ -56,6 +56,8 @@ def demo():
     degree_u = 2
     degree_v = 3
 
+    print('points:', points.shape)
+
     fitter = Fitter()
 
     fitter.fit(points, size_u, size_v, degree_u, degree_v)
