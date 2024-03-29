@@ -40,13 +40,13 @@ def demo():
         ctrlpts_size_v,
     )
 
-    for _ in trange(10000):
+    for _ in trange(100):
         point = surf.evaluate_single((0.5, 0.5))
     print(point)
 
-    for _ in trange(10000):
-        point2 = evaluate(surf.data, (0.5, 0.5))
-    print(point2)
+    for _ in trange(100):
+        point2 = evaluate(surf.data)
+    print(np.array(point2).shape)
 
     exit()
 
