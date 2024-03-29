@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from typing import Union
 
 from bspline_fitting.Method.fitting import approximate_surface
 
@@ -9,15 +10,14 @@ class Fitter(object):
         return
 
     def fit(
-        self, points: np.ndarray, size_u: int, size_v: int, degree_u: int, degree_v: int
+        self,
+        points: np.ndarray,
+        size_u: int,
+        size_v: int,
+        degree_u: int,
+        degree_v: int,
+        use_centripetal: bool = False,
+        ctrlpts_size_u: Union[int, None] = None,
+        ctrlpts_size_v: Union[int, None] = None,
     ) -> bool:
-        surf = approximate_surface(points, size_u, size_v, degree_u, degree_v)
-        # surf = fitting.approximate_surface(points, size_u, size_v, degree_u, degree_v, ctrlpts_size_u=3, ctrlpts_size_v=4)
-
-        evalpts = np.array(surf.evalpts)
-        pts = np.array(points)
-        ax = plt.axes(projection="3d")
-        ax.scatter(evalpts[:, 0], evalpts[:, 1], evalpts[:, 2])
-        ax.scatter(pts[:, 0], pts[:, 1], pts[:, 2], color="red")
-        plt.show()
         return True
