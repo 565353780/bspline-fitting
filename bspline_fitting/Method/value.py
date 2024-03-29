@@ -40,7 +40,7 @@ def basis_function(
     right = np.zeros(degree + 1, dtype=float)
     N = np.ones(degree + 1, dtype=float)
 
-    left[1 : degree + 1] = knot - knot_vector[span - degree : span][::-1]
+    left[1 : degree + 1] = knot - knot_vector[span - degree + 1 : span + 1][::-1]
     right[1 : degree + 1] = knot_vector[span + 1 : span + degree + 1] - knot
 
     for j in range(1, degree + 1):
@@ -54,9 +54,7 @@ def basis_function(
     return N
 
 
-def basis_functions(
-    degree: int, knot_vector: np.ndarray, spans: np.ndarray, knots: np.ndarray
-) -> np.ndarray:
+def basis_functions(degree, knot_vector, spans, knots):
     basis = []
     for span, knot in zip(spans, knots):
         basis.append(basis_function(degree, knot_vector, span, knot))
