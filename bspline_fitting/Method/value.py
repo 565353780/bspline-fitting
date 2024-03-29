@@ -1,46 +1,49 @@
-def linspace(start, stop, num, decimals=18):
-    start = float(start)
-    stop = float(stop)
-    if abs(start - stop) <= 10e-8:
-        return [start]
-    num = int(num)
-    if num > 1:
-        div = num - 1
-        delta = stop - start
-        return [
-            float(
-                ("{:." + str(decimals) + "f}").format(
-                    (start + (float(x) * float(delta) / float(div)))
-                )
-            )
-            for x in range(num)
-        ]
-    return [float(("{:." + str(decimals) + "f}").format(start))]
+import numpy as np
 
 
-def find_span_linear(degree, knot_vector, num_ctrlpts, knot, **kwargs):
-    span = degree + 1  # Knot span index starts from zero
+def linspace(start: float, stop: float, num: int) -> np.ndarray:
+    if abs(stop - start) <= 10e-8:
+        return np.array([start])
+
+    if num < 2:
+        return np.array([start])
+
+    div = num - 1
+    delta = stop - start
+    return start + np.arange(num, dtype=float) * delta / div
+
+
+def find_span_linear(
+    degree: int, knot_vector: np.ndarray, num_ctrlpts: int, knot: int
+) -> int:
+    span = degree + 1
+
     while span < num_ctrlpts and knot_vector[span] <= knot:
         span += 1
 
     return span - 1
 
 
-def find_spans(degree, knot_vector, num_ctrlpts, knots, func=find_span_linear):
+def find_spans(
+    degree: int, knot_vector: np.ndarray, num_ctrlpts: int, knots: np.ndarray
+) -> np.ndarray:
     spans = []
     for knot in knots:
-        spans.append(func(degree, knot_vector, num_ctrlpts, knot))
-    return spans
+        spans.append(find_span_linear(degree, knot_vector, num_ctrlpts, knot))
+    return np.array(spans, dtype=int)
 
 
-def basis_function(degree, knot_vector, span, knot):
-    left = [0.0 for _ in range(degree + 1)]
-    right = [0.0 for _ in range(degree + 1)]
-    N = [1.0 for _ in range(degree + 1)]  # N[0] = 1.0 by definition
+def basis_function(
+    degree: int, knot_vector: np.ndarray, span: int, knot: int
+) -> np.ndarray:
+    left = np.zeros(degree + 1, dtype=float)
+    right = np.zeros(degree + 1, dtype=float)
+    N = np.ones(degree + 1, dtype=float)
+
+    left[1 : degree + 1] = knot - knot_vector[span - degree : span][::-1]
+    right[1 : degree + 1] = knot_vector[span + 1 : span + degree + 1] - knot
 
     for j in range(1, degree + 1):
-        left[j] = knot - knot_vector[span + 1 - j]
-        right[j] = knot_vector[span + j] - knot
         saved = 0.0
         for r in range(0, j):
             temp = N[r] / (right[r + 1] + left[j - r])
@@ -51,11 +54,13 @@ def basis_function(degree, knot_vector, span, knot):
     return N
 
 
-def basis_functions(degree, knot_vector, spans, knots):
+def basis_functions(
+    degree: int, knot_vector: np.ndarray, spans: np.ndarray, knots: np.ndarray
+) -> np.ndarray:
     basis = []
     for span, knot in zip(spans, knots):
         basis.append(basis_function(degree, knot_vector, span, knot))
-    return basis
+    return np.array(basis)
 
 
 def evaluate(datadict, param):
@@ -78,7 +83,7 @@ def evaluate(datadict, param):
     spans = [[] for _ in range(pdimension)]
     basis = [[] for _ in range(pdimension)]
     for idx in range(pdimension):
-        knots = linspace(start[idx], stop[idx], sample_size[idx], decimals=precision)
+        knots = linspace(start[idx], stop[idx], sample_size[idx])
         spans[idx] = find_spans(degree[idx], knotvector[idx], size[idx], knots)
         basis[idx] = basis_functions(degree[idx], knotvector[idx], spans[idx], knots)
 
