@@ -61,19 +61,19 @@ def compute_params_surface(points, size_u, size_v, centripetal=False):
 
 def compute_knot_vector2(degree, num_dpts, num_cpts, params):
     # Start knot vector
-    kv = [0.0 for _ in range(degree + 1)]
+    kv = np.zeros(degree + num_cpts + 1, dtype=float)
 
     # Compute "d" value - Eqn 9.68
-    d = float(num_dpts) / float(num_cpts - degree)
+    d = 1.0 * num_dpts / (num_cpts - degree)
     # Find internal knots
     for j in range(1, num_cpts - degree):
         i = int(j * d)
         alpha = (j * d) - i
         temp_kv = ((1.0 - alpha) * params[i - 1]) + (alpha * params[i])
-        kv.append(temp_kv)
+        kv[degree + j] = temp_kv
 
     # End knot vector
-    kv += [1.0 for _ in range(degree + 1)]
+    kv[num_cpts:] = 1.0
 
     return kv
 
