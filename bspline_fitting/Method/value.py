@@ -65,7 +65,6 @@ def evaluate(datadict, param):
     start = param
     stop = param
 
-    # Geometry data from datadict
     sample_size = datadict["sample_size"]
     degree = datadict["degree"]
     knotvector = datadict["knotvector"]
@@ -75,9 +74,7 @@ def evaluate(datadict, param):
         datadict["dimension"] + 1 if datadict["rational"] else datadict["dimension"]
     )
     pdimension = datadict["pdimension"]
-    precision = datadict["precision"]
 
-    # Algorithm A3.5
     spans = [[] for _ in range(pdimension)]
     basis = [[] for _ in range(pdimension)]
     for idx in range(pdimension):

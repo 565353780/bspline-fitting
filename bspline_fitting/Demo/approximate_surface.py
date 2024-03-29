@@ -1,5 +1,6 @@
 import numpy as np
 import open3d as o3d
+from tqdm import trange
 
 from bspline_fitting.Config.test_data import TEST_POINTS
 from bspline_fitting.Method.fitting import approximate_surface
@@ -39,11 +40,14 @@ def demo():
         ctrlpts_size_v,
     )
 
-    point = surf.evaluate_single((0.5, 0.5))
+    for _ in trange(10000):
+        point = surf.evaluate_single((0.5, 0.5))
     print(point)
 
-    point2 = evaluate(surf.data, (0.5, 0.5))
+    for _ in trange(10000):
+        point2 = evaluate(surf.data, (0.5, 0.5))
     print(point2)
+
     exit()
 
     evalpts = np.array(surf.evalpts)
