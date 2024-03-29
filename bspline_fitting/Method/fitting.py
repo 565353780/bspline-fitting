@@ -1,4 +1,5 @@
 import numpy as np
+from typing import Union
 
 from geomdl import BSpline
 
@@ -148,74 +149,55 @@ def doolittle(matrix_a):
 
 
 def forward_substitution(matrix_l, matrix_b):
-    """Forward substitution method for the solution of linear systems.
+    matrix_size = matrix_b.shape[0]
+    matrix_y = np.zeros(matrix_size, dtype=float)
+    matrix_y[0] = matrix_b[0] / matrix_l[0, 0]
 
-    Solves the equation :math:`Ly = b` using forward substitution method
-    where :math:`L` is a lower triangular matrix and :math:`b` is a column matrix.
-
-    :param matrix_l: L, lower triangular matrix
-    :type matrix_l: list, tuple
-    :param matrix_b: b, column matrix
-    :type matrix_b: list, tuple
-    :return: y, column matrix
-    :rtype: list
-    """
-    q = len(matrix_b)
-    matrix_y = [0.0 for _ in range(q)]
-    matrix_y[0] = float(matrix_b[0]) / float(matrix_l[0][0])
-    for i in range(1, q):
-        matrix_y[i] = float(matrix_b[i]) - sum(
-            [matrix_l[i][j] * matrix_y[j] for j in range(0, i)]
-        )
-        matrix_y[i] /= float(matrix_l[i][i])
+    for i in range(1, matrix_size):
+        matrix_y[i] = matrix_b[i] - matrix_l[i, :i].dot(matrix_y[:i])
+        matrix_y[i] /= matrix_l[i][i]
     return matrix_y
 
 
 def backward_substitution(matrix_u, matrix_y):
-    """Backward substitution method for the solution of linear systems.
+    matrix_size = matrix_y.shape[0]
 
-    Solves the equation :math:`Ux = y` using backward substitution method
-    where :math:`U` is a upper triangular matrix and :math:`y` is a column matrix.
+    matrix_x = np.zeros(matrix_size, dtype=float)
 
-    :param matrix_u: U, upper triangular matrix
-    :type matrix_u: list, tuple
-    :param matrix_y: y, column matrix
-    :type matrix_y: list, tuple
-    :return: x, column matrix
-    :rtype: list
-    """
-    q = len(matrix_y)
-    matrix_x = [0.0 for _ in range(q)]
-    matrix_x[q - 1] = float(matrix_y[q - 1]) / float(matrix_u[q - 1][q - 1])
-    for i in range(q - 2, -1, -1):
-        matrix_x[i] = float(matrix_y[i]) - sum(
-            [matrix_u[i][j] * matrix_x[j] for j in range(i, q)]
+    matrix_x[matrix_size - 1] = (
+        matrix_y[matrix_size - 1] / matrix_u[matrix_size - 1, matrix_size - 1]
+    )
+    for i in range(matrix_size - 2, -1, -1):
+        matrix_x[i] = matrix_y[i] - matrix_u[i, i:matrix_size].dot(
+            matrix_x[i:matrix_size]
         )
-        matrix_x[i] /= float(matrix_u[i][i])
+        matrix_x[i] /= matrix_u[i, i]
     return matrix_x
 
 
-def approximate_surface(points, size_u, size_v, degree_u, degree_v, **kwargs):
-    # Keyword arguments
-    use_centripetal = kwargs.get("centripetal", False)
-    num_cpts_u = kwargs.get(
-        "ctrlpts_size_u", size_u - 1
-    )  # number of datapts, r + 1 > number of ctrlpts, n + 1
-    num_cpts_v = kwargs.get(
-        "ctrlpts_size_v", size_v - 1
-    )  # number of datapts, s + 1 > number of ctrlpts, m + 1
+def approximate_surface(
+    points: np.ndarray,
+    size_u: int,
+    size_v: int,
+    degree_u: int,
+    degree_v: int,
+    use_centripetal: bool = False,
+    ctrlpts_size_u: Union[int, None] = None,
+    ctrlpts_size_v: Union[int, None] = None,
+) -> BSpline.Surface:
+    num_cpts_u = size_u - 1
+    num_cpts_v = size_v - 1
 
-    # Dimension
-    dim = len(points[0])
+    if ctrlpts_size_u is not None:
+        num_cpts_u = ctrlpts_size_u
+    if ctrlpts_size_v is not None:
+        num_cpts_v = ctrlpts_size_v
 
-    # Get uk and vl
     uk, vl = compute_params_surface(points, size_u, size_v, use_centripetal)
 
-    # Compute knot vectors
     kv_u = compute_knot_vector2(degree_u, size_u, num_cpts_u, uk)
     kv_v = compute_knot_vector2(degree_v, size_v, num_cpts_v, vl)
 
-    # Construct matrix Nu
     matrix_nu = []
     for i in range(1, size_u - 1):
         m_temp = []
@@ -223,51 +205,52 @@ def approximate_surface(points, size_u, size_v, degree_u, degree_v, **kwargs):
             m_temp.append(basis_function_one(degree_u, kv_u, j, uk[i]))
         matrix_nu.append(m_temp)
     matrix_nu = np.array(matrix_nu, dtype=float)
-    # Compute Nu transpose
+
     matrix_ntu = matrix_nu.transpose(1, 0)
-    # Compute NTNu matrix
+
     matrix_ntnu = matrix_ntu.dot(matrix_nu)
-    # Compute LU-decomposition of NTNu matrix
+
     matrix_ntnul, matrix_ntnuu = doolittle(matrix_ntnu)
 
     # Fit u-direction
-    ctrlpts_tmp = [[0.0 for _ in range(dim)] for _ in range(num_cpts_u * size_v)]
+    ctrlpts_tmp = np.zeros([num_cpts_u * size_v, 3], dtype=float)
     for j in range(size_v):
-        ctrlpts_tmp[j + (size_v * 0)] = list(points[j + (size_v * 0)])
-        ctrlpts_tmp[j + (size_v * (num_cpts_u - 1))] = list(
-            points[j + (size_v * (size_u - 1))]
-        )
-        # Compute Rku - Eqn. 9.63
+        ctrlpts_tmp[j + (size_v * 0)] = points[j + (size_v * 0)]
+        ctrlpts_tmp[j + (size_v * (num_cpts_u - 1))] = points[
+            j + (size_v * (size_u - 1))
+        ]
+
         pt0 = points[j + (size_v * 0)]  # Qzero
         ptm = points[j + (size_v * (size_u - 1))]  # Qm
+
         rku = []
         for i in range(1, size_u - 1):
             ptk = points[j + (size_v * i)]
             n0p = basis_function_one(degree_u, kv_u, 0, uk[i])
             nnp = basis_function_one(degree_u, kv_u, num_cpts_u - 1, uk[i])
-            elem2 = [c * n0p for c in pt0]
-            elem3 = [c * nnp for c in ptm]
-            rku.append([a - b - c for a, b, c in zip(ptk, elem2, elem3)])
-        # Compute Ru - Eqn. 9.67
-        ru = [[0.0 for _ in range(dim)] for _ in range(num_cpts_u - 2)]
+            elem2 = n0p * pt0
+            elem3 = nnp * ptm
+            rku.append(ptk - elem2 - elem3)
+        rku = np.array(rku)
+
+        ru = np.zeros([num_cpts_u - 2, 3], dtype=float)
         for i in range(1, num_cpts_u - 1):
             ru_tmp = []
             for idx, pt in enumerate(rku):
-                ru_tmp.append(
-                    [p * basis_function_one(degree_u, kv_u, i, uk[idx + 1]) for p in pt]
-                )
-            for d in range(dim):
+                ru_tmp.append(basis_function_one(degree_u, kv_u, i, uk[idx + 1]) * pt)
+            for d in range(3):
                 for idx in range(len(ru_tmp)):
                     ru[i - 1][d] += ru_tmp[idx][d]
-        # Get intermediate control points
-        for d in range(dim):
-            b = [pt[d] for pt in ru]
+        ru = np.array(ru)
+
+        for d in range(3):
+            b = ru[:, d]
             y = forward_substitution(matrix_ntnul, b)
             x = backward_substitution(matrix_ntnuu, y)
-            for i in range(1, num_cpts_u - 1):
-                ctrlpts_tmp[j + (size_v * i)][d] = x[i - 1]
 
-    # Construct matrix Nv
+            for i in range(1, num_cpts_u - 1):
+                ctrlpts_tmp[j + (size_v * i), d] = x[i - 1]
+
     matrix_nv = []
     for i in range(1, size_v - 1):
         m_temp = []
@@ -275,21 +258,20 @@ def approximate_surface(points, size_u, size_v, degree_u, degree_v, **kwargs):
             m_temp.append(basis_function_one(degree_v, kv_v, j, vl[i]))
         matrix_nv.append(m_temp)
     matrix_nv = np.array(matrix_nv, dtype=float)
-    # Compute Nv transpose
+
     matrix_ntv = matrix_nv.transpose(1, 0)
-    # Compute NTNv matrix
+
     matrix_ntnv = matrix_ntv.dot(matrix_nv)
-    # Compute LU-decomposition of NTNv matrix
+
     matrix_ntnvl, matrix_ntnvu = doolittle(matrix_ntnv)
 
-    # Fit v-direction
-    ctrlpts = [[0.0 for _ in range(dim)] for _ in range(num_cpts_u * num_cpts_v)]
+    ctrlpts = np.zeros([num_cpts_u * num_cpts_v, 3], dtype=float)
     for i in range(num_cpts_u):
-        ctrlpts[0 + (num_cpts_v * i)] = list(ctrlpts_tmp[0 + (size_v * i)])
-        ctrlpts[num_cpts_v - 1 + (num_cpts_v * i)] = list(
-            ctrlpts_tmp[size_v - 1 + (size_v * i)]
-        )
-        # Compute Rkv - Eqs. 9.63
+        ctrlpts[0 + (num_cpts_v * i)] = ctrlpts_tmp[0 + (size_v * i)]
+        ctrlpts[num_cpts_v - 1 + (num_cpts_v * i)] = ctrlpts_tmp[
+            size_v - 1 + (size_v * i)
+        ]
+
         pt0 = ctrlpts_tmp[0 + (size_v * i)]  # Qzero
         ptm = ctrlpts_tmp[size_v - 1 + (size_v * i)]  # Qm
         rkv = []
@@ -297,29 +279,27 @@ def approximate_surface(points, size_u, size_v, degree_u, degree_v, **kwargs):
             ptk = ctrlpts_tmp[j + (size_v * i)]
             n0p = basis_function_one(degree_v, kv_v, 0, vl[j])
             nnp = basis_function_one(degree_v, kv_v, num_cpts_v - 1, vl[j])
-            elem2 = [c * n0p for c in pt0]
-            elem3 = [c * nnp for c in ptm]
-            rkv.append([a - b - c for a, b, c in zip(ptk, elem2, elem3)])
-        # Compute Rv - Eqn. 9.67
-        rv = [[0.0 for _ in range(dim)] for _ in range(num_cpts_v - 2)]
+            elem2 = n0p * pt0
+            elem3 = nnp * ptm
+            rkv.append(ptk - elem2 - elem3)
+        rkv = np.array(rkv)
+
+        rv = np.zeros([num_cpts_v - 2, 3], dtype=float)
         for j in range(1, num_cpts_v - 1):
             rv_tmp = []
             for idx, pt in enumerate(rkv):
-                rv_tmp.append(
-                    [p * basis_function_one(degree_v, kv_v, j, vl[idx + 1]) for p in pt]
-                )
-            for d in range(dim):
+                rv_tmp.append(basis_function_one(degree_v, kv_v, j, vl[idx + 1]) * pt)
+            for d in range(3):
                 for idx in range(len(rv_tmp)):
                     rv[j - 1][d] += rv_tmp[idx][d]
-        # Get intermediate control points
-        for d in range(dim):
-            b = [pt[d] for pt in rv]
+
+        for d in range(3):
+            b = rv[:, d]
             y = forward_substitution(matrix_ntnvl, b)
             x = backward_substitution(matrix_ntnvu, y)
             for j in range(1, num_cpts_v - 1):
-                ctrlpts[j + (num_cpts_v * i)][d] = x[j - 1]
+                ctrlpts[j + (num_cpts_v * i), d] = x[j - 1]
 
-    # Generate B-spline surface
     surf = BSpline.Surface()
     surf.degree_u = degree_u
     surf.degree_v = degree_v
