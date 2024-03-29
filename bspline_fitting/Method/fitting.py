@@ -62,6 +62,7 @@ def compute_params_surface(points, size_u, size_v, centripetal=False):
 def compute_knot_vector2(degree, num_dpts, num_cpts, params):
     # Start knot vector
     kv = np.zeros(degree + num_cpts + 1, dtype=float)
+    kv[num_cpts:] = 1.0
 
     # Compute "d" value - Eqn 9.68
     d = 1.0 * num_dpts / (num_cpts - degree)
@@ -72,28 +73,10 @@ def compute_knot_vector2(degree, num_dpts, num_cpts, params):
         temp_kv = ((1.0 - alpha) * params[i - 1]) + (alpha * params[i])
         kv[degree + j] = temp_kv
 
-    # End knot vector
-    kv[num_cpts:] = 1.0
-
     return kv
 
 
 def basis_function_one(degree, knot_vector, span, knot):
-    """Computes the value of a basis function for a single parameter.
-
-    Implementation of Algorithm 2.4 from The NURBS Book by Piegl & Tiller.
-
-    :param degree: degree, :math:`p`
-    :type degree: int
-    :param knot_vector: knot vector
-    :type knot_vector: list, tuple
-    :param span: knot span, :math:`i`
-    :type span: int
-    :param knot: knot or parameter, :math:`u`
-    :type knot: float
-    :return: basis function, :math:`N_{i,p}`
-    :rtype: float
-    """
     # Special case at boundaries
     if (
         (span == 0 and knot == knot_vector[0])
@@ -106,7 +89,7 @@ def basis_function_one(degree, knot_vector, span, knot):
     if knot < knot_vector[span] or knot >= knot_vector[span + degree + 1]:
         return 0.0
 
-    N = [0.0 for _ in range(degree + span + 1)]
+    N = np.zeros(degree + span + 1, dtype=float)
 
     # Initialize the zeroth degree basis functions
     for j in range(0, degree + 1):
@@ -138,126 +121,30 @@ def basis_function_one(degree, knot_vector, span, knot):
     return N[0]
 
 
-def matrix_transpose(m):
-    """Transposes the input matrix.
-
-    The input matrix :math:`m` is a 2-dimensional array.
-
-    :param m: input matrix with dimensions :math:`(n \\times m)`
-    :type m: list, tuple
-    :return: transpose matrix with dimensions :math:`(m \\times n)`
-    :rtype: list
-    """
-    num_cols = len(m)
-    num_rows = len(m[0])
-    m_t = []
-    for i in range(num_rows):
-        temp = []
-        for j in range(num_cols):
-            temp.append(m[j][i])
-        m_t.append(temp)
-    return m_t
-
-
-def matrix_multiply(mat1, mat2):
-    """Matrix multiplication (iterative algorithm).
-
-    The running time of the iterative matrix multiplication algorithm is :math:`O(n^{3})`.
-
-    :param mat1: 1st matrix with dimensions :math:`(n \\times p)`
-    :type mat1: list, tuple
-    :param mat2: 2nd matrix with dimensions :math:`(p \\times m)`
-    :type mat2: list, tuple
-    :return: resultant matrix with dimensions :math:`(n \\times m)`
-    :rtype: list
-    """
-    n = len(mat1)
-    p1 = len(mat1[0])
-    p2 = len(mat2)
-    assert p1 == p2, "Column - row size mismatch"
-
-    try:
-        # Matrix - matrix multiplication
-        m = len(mat2[0])
-        mat3 = [[0.0 for _ in range(m)] for _ in range(n)]
-        for i in range(n):
-            for j in range(m):
-                for k in range(p2):
-                    mat3[i][j] += float(mat1[i][k] * mat2[k][j])
-    except TypeError:
-        # Matrix - vector multiplication
-        mat3 = [0.0 for _ in range(n)]
-        for i in range(n):
-            for k in range(p2):
-                mat3[i] += float(mat1[i][k] * mat2[k])
-    return mat3
-
-
 def doolittle(matrix_a):
-    """Doolittle's Method for LU-factorization.
+    matrix_a = np.array(matrix_a, dtype=float)
+    matrix_size = matrix_a.shape[0]
 
-    :param matrix_a: Input matrix (must be a square matrix)
-    :type matrix_a: list, tuple
-    :return: a tuple containing matrices (L,U)
-    :rtype: tuple
-    """
     # Initialize L and U matrices
-    matrix_u = [[0.0 for _ in range(len(matrix_a))] for _ in range(len(matrix_a))]
-    matrix_l = [[0.0 for _ in range(len(matrix_a))] for _ in range(len(matrix_a))]
+    matrix_u = np.zeros([matrix_size, matrix_size], dtype=float)
+    matrix_l = np.zeros([matrix_size, matrix_size], dtype=float)
 
-    # Doolittle Method
-    for i in range(0, len(matrix_a)):
-        for k in range(i, len(matrix_a)):
+    for i in range(0, matrix_size):
+        for k in range(i, matrix_size):
             # Upper triangular (U) matrix
-            matrix_u[i][k] = float(
-                matrix_a[i][k]
-                - sum([matrix_l[i][j] * matrix_u[j][k] for j in range(0, i)])
-            )
+            matrix_u[i, k] = matrix_a[i, k] - matrix_l[i, :i].dot(matrix_u[:i, k])
             # Lower triangular (L) matrix
             if i == k:
-                matrix_l[i][i] = 1.0
+                matrix_l[i, i] = 1.0
             else:
-                matrix_l[k][i] = float(
-                    matrix_a[k][i]
-                    - sum([matrix_l[k][j] * matrix_u[j][i] for j in range(0, i)])
-                )
-                # Handle zero division error
-                try:
-                    matrix_l[k][i] /= float(matrix_u[i][i])
-                except ZeroDivisionError:
-                    matrix_l[k][i] = 0.0
+                matrix_l[k, i] = matrix_a[k, i] - matrix_l[k, :i].dot(matrix_u[:i, i])
+
+                if matrix_u[i, i] == 0.0:
+                    matrix_l[k, i] = 0.0
+                else:
+                    matrix_l[k, i] /= matrix_u[i, i]
 
     return matrix_l, matrix_u
-
-
-def lu_decomposition(matrix_a):
-    """LU-Factorization method using Doolittle's Method for solution of linear systems.
-
-    Decomposes the matrix :math:`A` such that :math:`A = LU`.
-
-    The input matrix is represented by a list or a tuple. The input matrix is **2-dimensional**, i.e. list of lists of
-    integers and/or floats.
-
-    :param matrix_a: Input matrix (must be a square matrix)
-    :type matrix_a: list, tuple
-    :return: a tuple containing matrices L and U
-    :rtype: tuple
-    """
-    # Check if the 2-dimensional input matrix is a square matrix
-    q = len(matrix_a)
-    for idx, m_a in enumerate(matrix_a):
-        if len(m_a) != q:
-            raise ValueError(
-                "The input must be a square matrix. "
-                + "Row "
-                + str(idx + 1)
-                + " has a size of "
-                + str(len(m_a))
-                + "."
-            )
-
-    # Return L and U matrices
-    return doolittle(matrix_a)
 
 
 def forward_substitution(matrix_l, matrix_b):
@@ -335,12 +222,13 @@ def approximate_surface(points, size_u, size_v, degree_u, degree_v, **kwargs):
         for j in range(1, num_cpts_u - 1):
             m_temp.append(basis_function_one(degree_u, kv_u, j, uk[i]))
         matrix_nu.append(m_temp)
+    matrix_nu = np.array(matrix_nu, dtype=float)
     # Compute Nu transpose
-    matrix_ntu = matrix_transpose(matrix_nu)
+    matrix_ntu = matrix_nu.transpose(1, 0)
     # Compute NTNu matrix
-    matrix_ntnu = matrix_multiply(matrix_ntu, matrix_nu)
+    matrix_ntnu = matrix_ntu.dot(matrix_nu)
     # Compute LU-decomposition of NTNu matrix
-    matrix_ntnul, matrix_ntnuu = lu_decomposition(matrix_ntnu)
+    matrix_ntnul, matrix_ntnuu = doolittle(matrix_ntnu)
 
     # Fit u-direction
     ctrlpts_tmp = [[0.0 for _ in range(dim)] for _ in range(num_cpts_u * size_v)]
@@ -386,12 +274,13 @@ def approximate_surface(points, size_u, size_v, degree_u, degree_v, **kwargs):
         for j in range(1, num_cpts_v - 1):
             m_temp.append(basis_function_one(degree_v, kv_v, j, vl[i]))
         matrix_nv.append(m_temp)
+    matrix_nv = np.array(matrix_nv, dtype=float)
     # Compute Nv transpose
-    matrix_ntv = matrix_transpose(matrix_nv)
+    matrix_ntv = matrix_nv.transpose(1, 0)
     # Compute NTNv matrix
-    matrix_ntnv = matrix_multiply(matrix_ntv, matrix_nv)
+    matrix_ntnv = matrix_ntv.dot(matrix_nv)
     # Compute LU-decomposition of NTNv matrix
-    matrix_ntnvl, matrix_ntnvu = lu_decomposition(matrix_ntnv)
+    matrix_ntnvl, matrix_ntnvu = doolittle(matrix_ntnv)
 
     # Fit v-direction
     ctrlpts = [[0.0 for _ in range(dim)] for _ in range(num_cpts_u * num_cpts_v)]
