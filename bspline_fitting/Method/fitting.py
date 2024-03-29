@@ -305,7 +305,7 @@ def approximate_surface(
     surf.degree_v = degree_v
     surf.ctrlpts_size_u = num_cpts_u
     surf.ctrlpts_size_v = num_cpts_v
-    surf.ctrlpts = ctrlpts
+    surf.ctrlpts = ctrlpts.tolist()
     surf.knotvector_u = kv_u
     surf.knotvector_v = kv_v
 
