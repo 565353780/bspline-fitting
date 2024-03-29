@@ -1,7 +1,9 @@
 import numpy as np
 import open3d as o3d
 
+from bspline_fitting.Config.test_data import TEST_POINTS
 from bspline_fitting.Method.fitting import approximate_surface
+from bspline_fitting.Method.value import evaluate
 
 
 def demo():
@@ -18,7 +20,7 @@ def demo():
     crop_pcd = pcd.crop(abb)
 
     points = np.asarray(crop_pcd.points)
-    size_u = 7
+    size_u = 5
     size_v = 7
     degree_u = 3
     degree_v = 3
@@ -27,7 +29,7 @@ def demo():
     ctrlpts_size_v = None
 
     surf = approximate_surface(
-        points,
+        TEST_POINTS,
         size_u,
         size_v,
         degree_u,
@@ -36,6 +38,13 @@ def demo():
         ctrlpts_size_u,
         ctrlpts_size_v,
     )
+
+    point = surf.evaluate_single((0.5, 0.5))
+    print(point)
+
+    point2 = evaluate(surf.data, (0.5, 0.5))
+    print(point2)
+    exit()
 
     evalpts = np.array(surf.evalpts)
     fitting_pcd = o3d.geometry.PointCloud()
