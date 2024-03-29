@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 
 from bspline_fitting.Method.fitting import approximate_surface
 
+
 class Fitter(object):
     def __init__(self) -> None:
         return
@@ -15,7 +16,7 @@ class Fitter(object):
 
         evalpts = np.array(surf.evalpts)
         pts = np.array(points)
-        ax = plt.axes(projection='3d')
+        ax = plt.axes(projection="3d")
         ax.scatter(evalpts[:, 0], evalpts[:, 1], evalpts[:, 2])
         ax.scatter(pts[:, 0], pts[:, 1], pts[:, 2], color="red")
         plt.show()
