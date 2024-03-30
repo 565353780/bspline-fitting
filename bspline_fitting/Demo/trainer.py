@@ -8,8 +8,8 @@ from bspline_fitting.Module.trainer import Trainer
 
 
 def demo():
-    degree_u = 3
-    degree_v = 3
+    degree_u = 2
+    degree_v = 2
     size_u = 7
     size_v = 7
     sample_num_u = 20
@@ -22,14 +22,14 @@ def demo():
     dtype = torch.float64
     device = "cpu"
 
-    warm_epoch_step_num = 10
-    warm_epoch_num = 2
+    warm_epoch_step_num = 20
+    warm_epoch_num = 4
     finetune_step_num = 400
-    lr = 1e-2
+    lr = 5e-2
     weight_decay = 1e-4
     factor = 0.9
     patience = 1
-    min_lr = 1e-4
+    min_lr = 1e-3
 
     render = True
     render_freq = 1
