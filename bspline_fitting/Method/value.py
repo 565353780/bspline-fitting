@@ -12,9 +12,6 @@ def evaluate(
     knotvector = datadict["knotvector"]
     ctrlpts = datadict["control_points"]
     size = datadict["size"]
-    dimension = (
-        datadict["dimension"] + 1 if datadict["rational"] else datadict["dimension"]
-    )
 
     eval_points = bs_fit_cpp.toPoints(
         degree,
@@ -22,7 +19,6 @@ def evaluate(
         knotvector[1],
         ctrlpts,
         size,
-        dimension,
         start,
         stop,
         sample_size,

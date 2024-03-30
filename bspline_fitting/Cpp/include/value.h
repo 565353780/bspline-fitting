@@ -26,6 +26,5 @@ const std::vector<std::vector<float>>
 toPoints(const std::vector<int> &degree, const std::vector<float> &u_knotvector,
          const std::vector<float> &v_knotvector,
          const std::vector<std::vector<float>> &ctrlpts,
-         const std::vector<int> &size, const int &dimension,
-         const std::vector<float> &start, const std::vector<float> &stop,
-         const std::vector<int> &sample_size);
+         const std::vector<int> &size, const std::vector<float> &start,
+         const std::vector<float> &stop, const std::vector<int> &sample_size);

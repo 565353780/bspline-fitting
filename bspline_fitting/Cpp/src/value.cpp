@@ -107,9 +107,8 @@ const std::vector<std::vector<float>>
 toPoints(const std::vector<int> &degree, const std::vector<float> &u_knotvector,
          const std::vector<float> &v_knotvector,
          const std::vector<std::vector<float>> &ctrlpts,
-         const std::vector<int> &size, const int &dimension,
-         const std::vector<float> &start, const std::vector<float> &stop,
-         const std::vector<int> &sample_size) {
+         const std::vector<int> &size, const std::vector<float> &start,
+         const std::vector<float> &stop, const std::vector<int> &sample_size) {
   std::vector<std::vector<int>> spans(2);
   std::vector<std::vector<std::vector<float>>> basis(2);
 
@@ -143,10 +142,10 @@ toPoints(const std::vector<int> &degree, const std::vector<float> &u_knotvector,
     for (size_t j = 0; j < spans[1].size(); ++j) {
       const int idx_v = spans[1][j] - degree[1];
 
-      std::vector<float> spt(dimension, 0.0);
+      std::vector<float> spt(3, 0.0);
 
       for (int k = 0; k < degree[0] + 1; ++k) {
-        std::vector<float> temp(dimension, 0.0);
+        std::vector<float> temp(3, 0.0);
 
         for (int l = 0; l < degree[1] + 1; ++l) {
           for (size_t m = 0; m < temp.size(); ++m) {
