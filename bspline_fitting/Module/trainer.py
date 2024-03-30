@@ -15,6 +15,7 @@ from bspline_fitting.Config.constant import EPSILON
 from bspline_fitting.Loss.chamfer_distance import chamferDistance
 from bspline_fitting.Method.pcd import getPointCloud
 from bspline_fitting.Method.time import getCurrentTime
+from bspline_fitting.Method.fitting import approximate_surface
 from bspline_fitting.Model.bspline_surface import BSplineSurface
 from bspline_fitting.Module.logger import Logger
 from bspline_fitting.Module.o3d_viewer import O3DViewer
@@ -275,7 +276,7 @@ class Trainer(object):
                 with torch.no_grad():
                     self.o3d_viewer.clearGeometries()
 
-                    mesh_abb_length = 2.0 * self.mesh.toABBLength()
+                    mesh_abb_length = 1.0
 
                     gt_pcd = getPointCloud(gt_points.reshape(-1, 3).cpu().numpy())
                     gt_pcd.translate([-mesh_abb_length, 0, 0])
@@ -290,11 +291,6 @@ class Trainer(object):
                     )
                     pcd = getPointCloud(detect_points)
                     self.o3d_viewer.addGeometry(pcd)
-
-                    self.mesh.paintJetColorsByPoints(detect_points)
-                    mesh = self.mesh.toO3DMesh()
-                    mesh.translate([mesh_abb_length, 0, 0])
-                    self.o3d_viewer.addGeometry(mesh)
 
                     """
                     for j in range(self.bspline_surface.mask_params.shape[0]):
@@ -346,24 +342,47 @@ class Trainer(object):
 
     def autoTrainBSplineSurface(
         self,
-        gt_points_num: int = 10000,
+        gt_points: Union[np.ndarray, list, tuple],
     ) -> bool:
         print("[INFO][Trainer::autoTrainBSplineSurface]")
         print("\t start auto train BSplineSurface...")
         print(
-            "\t degree: mask:",
-            self.bspline_surface.mask_degree_max,
-            "sh:",
-            self.bspline_surface.sh_degree_max,
+            "\t degree_u:",
+            self.bspline_surface.degree_u,
+            ", degree_v:",
+            self.bspline_surface.degree_v,
+            ", size_u:",
+            self.bspline_surface.size_u,
+            ", size_v:",
+            self.bspline_surface.size_v,
         )
+
+        if isinstance(gt_points, list) or isinstance(gt_points, tuple):
+            gt_points = np.array(gt_points)
+
+        surf = approximate_surface(
+            gt_points,
+            self.bspline_surface.size_u,
+            self.bspline_surface.size_v,
+            self.bspline_surface.degree_u,
+            self.bspline_surface.degree_v,
+        )
+
+        self.bspline_surface.loadParams(
+            surf.data["knotvector"][0],
+            surf.data["knotvector"][1],
+            surf.data["control_points"],
+        )
+
+        gt_points = torch.from_numpy(gt_points)
 
         if self.bspline_surface.device == "cpu":
             gt_points_dtype = self.bspline_surface.dtype
         else:
             gt_points_dtype = torch.float32
+
         gt_points = (
-            torch.from_numpy(self.mesh.toSamplePoints(gt_points_num))
-            .type(gt_points_dtype)
+            gt_points.type(gt_points_dtype)
             .to(self.bspline_surface.device)
             .reshape(1, -1, 3)
         )
@@ -371,10 +390,9 @@ class Trainer(object):
         while True:
             optimizer = AdamW(
                 [
-                    self.bspline_surface.mask_params,
-                    self.bspline_surface.sh_params,
-                    self.bspline_surface.rotate_vectors,
-                    self.bspline_surface.positions,
+                    # self.bspline_surface.knotvector_u,
+                    # self.bspline_surface.knotvector_v,
+                    self.bspline_surface.ctrlpts,
                 ],
                 lr=self.lr,
                 weight_decay=self.weight_decay,
@@ -392,32 +410,6 @@ class Trainer(object):
             for param_group in optimizer.param_groups:
                 param_group["lr"] = self.lr
             self.trainBSplineSurface(optimizer, finetune_scheduler, gt_points)
-
-            break
-
-            if self.upperSHDegree():
-                print("[INFO][Trainer::autoTrainBSplineSurface]")
-                print("\t upperSHDegree success!")
-                print("\t start auto train BSplineSurface...")
-                print(
-                    "\t degree: mask:",
-                    self.bspline_surface.mask_degree_max,
-                    "sh:",
-                    self.bspline_surface.sh_degree_max,
-                )
-                continue
-
-            if self.upperMaskDegree():
-                print("[INFO][Trainer::autoTrainBSplineSurface]")
-                print("\t upperMaskDegree success!")
-                print("\t start auto train BSplineSurface...")
-                print(
-                    "\t degree: mask:",
-                    self.bspline_surface.mask_degree_max,
-                    "sh:",
-                    self.bspline_surface.sh_degree_max,
-                )
-                continue
 
             break
 

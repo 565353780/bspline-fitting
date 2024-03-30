@@ -1,10 +1,12 @@
 import torch
 from typing import Tuple
 
-from ma_sh.Lib.ChamferDistance.chamfer_python import distChamfer
+from bspline_fitting.Lib.ChamferDistance.chamfer_python import distChamfer
 
 if torch.cuda.is_available():
-    from ma_sh.Lib.ChamferDistance.chamfer3D.dist_chamfer_3D import chamfer_3DDist
+    from bspline_fitting.Lib.ChamferDistance.chamfer3D.dist_chamfer_3D import (
+        chamfer_3DDist,
+    )
 
 
 def chamferDistance(

@@ -1,5 +1,6 @@
 import numpy as np
 import open3d as o3d
+from tqdm import trange
 
 from bspline_fitting.Method.fitting import approximate_surface
 from bspline_fitting.Model.bspline_surface import BSplineSurface
@@ -44,13 +45,15 @@ def demo():
         size_u,
         size_v,
     )
+    bspline_surface.setGradState(True)
     bspline_surface.loadParams(
         surf.data["knotvector"][0],
         surf.data["knotvector"][1],
         surf.data["control_points"],
     )
 
-    sample_points = bspline_surface.toSamplePoints()
+    for _ in trange(1000):
+        sample_points = bspline_surface.toSamplePoints()
 
     evalpts = np.array(surf.evalpts)
     fitting_pcd = o3d.geometry.PointCloud()
