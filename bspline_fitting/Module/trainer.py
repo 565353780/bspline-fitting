@@ -219,8 +219,8 @@ class Trainer(object):
             "cuda" not in self.bspline_surface.device,
         )[:2]
 
-        fit_dists = torch.mean(torch.sqrt(fit_dists2) + EPSILON)
-        coverage_dists = torch.mean(torch.sqrt(coverage_dists2) + EPSILON)
+        fit_dists = torch.mean(torch.sqrt(fit_dists2 + EPSILON))
+        coverage_dists = torch.mean(torch.sqrt(coverage_dists2 + EPSILON))
 
         mean_fit_loss = torch.mean(fit_dists)
         mean_coverage_loss = torch.mean(coverage_dists)

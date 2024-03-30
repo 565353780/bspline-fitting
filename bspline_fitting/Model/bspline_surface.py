@@ -7,6 +7,7 @@ from typing import Union
 import bs_fit_cpp
 
 from bspline_fitting.Method.check import checkShape
+from bspline_fitting.Method.value import toTorchPoints
 from bspline_fitting.Method.render import renderPoints
 from bspline_fitting.Method.path import createFileFolder, removeFile, renameFile
 

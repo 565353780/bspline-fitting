@@ -1,4 +1,6 @@
 import torch
+
+torch.autograd.set_detect_anomaly(True)
 import numpy as np
 import open3d as o3d
 
@@ -9,7 +11,7 @@ from bspline_fitting.Module.trainer import Trainer
 def demo():
     degree_u = 3
     degree_v = 3
-    size_u = 5
+    size_u = 7
     size_v = 7
     sample_u_num = 20
     sample_v_num = 20
@@ -21,8 +23,8 @@ def demo():
     dtype = torch.float64
     device = "cpu"
 
-    warm_epoch_step_num = 20
-    warm_epoch_num = 10
+    warm_epoch_step_num = 10
+    warm_epoch_num = 2
     finetune_step_num = 400
     lr = 1e-2
     weight_decay = 1e-4

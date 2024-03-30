@@ -1,6 +1,6 @@
+import torch
 import numpy as np
 import open3d as o3d
-from tqdm import trange
 
 from bspline_fitting.Method.fitting import approximate_surface
 from bspline_fitting.Model.bspline_surface import BSplineSurface
@@ -52,8 +52,14 @@ def demo():
         surf.data["control_points"],
     )
 
-    for _ in trange(1000):
-        sample_points = bspline_surface.toSamplePoints()
+    sample_points = bspline_surface.toSamplePoints()
+
+    loss = torch.mean(sample_points)
+    loss.backward()
+    print("bspline_surface.ctrlpts")
+    print(bspline_surface.ctrlpts)
+    print("bspline_surface.ctrlpts.grad")
+    print(bspline_surface.ctrlpts.grad)
 
     evalpts = np.array(surf.evalpts)
     fitting_pcd = o3d.geometry.PointCloud()
