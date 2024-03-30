@@ -1,6 +1,5 @@
 import torch
 
-torch.autograd.set_detect_anomaly(True)
 import numpy as np
 import open3d as o3d
 
