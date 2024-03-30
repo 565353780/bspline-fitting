@@ -1,5 +1,4 @@
 #include "value.h"
-#include <cmath>
 
 const std::vector<float> linspace(const float &start, const float &stop,
                                   const int &num) {

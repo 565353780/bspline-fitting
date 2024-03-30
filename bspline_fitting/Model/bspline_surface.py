@@ -224,29 +224,20 @@ class BSplineSurface(object):
         degree = [self.degree_u, self.degree_v]
         u_knotvector = self.knotvector_u.detach().clone().cpu().numpy().tolist()
         v_knotvector = self.knotvector_v.detach().clone().cpu().numpy().tolist()
-        ctrlpts = self.ctrlpts.detach().clone().cpu().numpy().tolist()
         size = [self.size_u - 1, self.size_v - 1]
         start = [self.start_u, self.start_v]
         stop = [self.stop_u, self.stop_v]
         sample_size = [self.sample_u_num, self.sample_v_num]
 
-        sample_points = bs_fit_cpp.toPoints(
-            degree, u_knotvector, v_knotvector, ctrlpts, size, start, stop, sample_size
-        )
-
-        return sample_points
-
-        sample_points = bs_fit_cpp.toPoints(
-            self.degree_u,
-            self.degree_v,
-            self.size_u - 1,
-            self.size_v - 1,
-            self.sample_u_num,
-            self.sample_v_num,
-            self.start_u,
-            self.start_v,
-            self.stop_u,
-            self.stop_v,
+        sample_points = bs_fit_cpp.toTorchPoints(
+            degree,
+            u_knotvector,
+            v_knotvector,
+            self.ctrlpts,
+            size,
+            start,
+            stop,
+            sample_size,
         )
 
         return sample_points

@@ -1,6 +1,5 @@
 #pragma once
-
-#include <torch/extension.h>
+#include <vector>
 
 const std::vector<float> linspace(const float &start, const float &stop,
                                   const int &num);

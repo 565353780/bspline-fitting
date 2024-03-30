@@ -56,7 +56,7 @@ def demo():
     fitting_pcd = o3d.geometry.PointCloud()
     fitting_pcd.points = o3d.utility.Vector3dVector(evalpts)
 
-    sample_points = np.array(sample_points)
+    sample_points = sample_points.detach().clone().cpu().numpy()
     sample_fitting_pcd = o3d.geometry.PointCloud()
     sample_fitting_pcd.points = o3d.utility.Vector3dVector(sample_points)
 

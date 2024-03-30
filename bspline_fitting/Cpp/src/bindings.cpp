@@ -1,4 +1,5 @@
 #include "value.h"
+#include "value_torch.h"
 
 #include <pybind11/pybind11.h>
 
@@ -11,4 +12,6 @@ PYBIND11_MODULE(bs_fit_cpp, m) {
   m.def("basis_function", &basis_function, "value.basis_function");
   m.def("basis_functions", &basis_functions, "value.basis_functions");
   m.def("toPoints", &toPoints, "value.toPoints");
+
+  m.def("toTorchPoints", &toTorchPoints, "value_torch.toTorchPoints");
 }
