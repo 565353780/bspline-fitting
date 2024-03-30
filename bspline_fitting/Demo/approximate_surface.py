@@ -41,10 +41,6 @@ def demo():
     )
 
     for _ in trange(100):
-        point = surf.evaluate_single((0.5, 0.5))
-    print(point)
-
-    for _ in trange(100):
         point2 = evaluate(surf.data)
     print(np.array(point2).shape)
 

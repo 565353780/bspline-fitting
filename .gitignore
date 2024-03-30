@@ -1,5 +1,13 @@
 # compiled
 __pycache__
+build
+.cache
+*.egg-info
+*.so
+compile_commands.json
+tmp
+
+
 
 # output
 output
