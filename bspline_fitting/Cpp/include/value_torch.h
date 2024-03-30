@@ -3,7 +3,8 @@
 #include <torch/extension.h>
 
 const torch::Tensor toTorchPoints(
-    const std::vector<int> &degree, const std::vector<float> &u_knotvector,
-    const std::vector<float> &v_knotvector, const torch::Tensor &ctrlpts,
-    const std::vector<int> &size, const std::vector<float> &start,
-    const std::vector<float> &stop, const std::vector<int> &sample_size);
+    const int &degree_u, const int &degree_v, const int &size_u,
+    const int &size_v, const int &sample_num_u, const int &sample_num_v,
+    const float &start_u, const float &start_v, const float &stop_u,
+    const float &stop_v, const std::vector<float> &knotvector_u,
+    const std::vector<float> &knotvector_v, const torch::Tensor &ctrlpts);

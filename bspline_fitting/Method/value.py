@@ -3,49 +3,53 @@ import bs_fit_cpp
 
 
 def toTorchPoints(
-    degree: list,
-    u_knotvector: list,
-    v_knotvector: list,
-    ctrlpts: torch.Tensor,
-    size: list,
-    start: list,
-    stop: list,
-    sample_size: list,
+    degree_u,
+    degree_v,
+    size_u,
+    size_v,
+    sample_num_u,
+    sample_num_v,
+    start_u,
+    start_v,
+    stop_u,
+    stop_v,
+    knotvector_u,
+    knotvector_v,
+    ctrlpts,
 ) -> torch.Tensor:
-    spans = bs_fit_cpp.toSpans(
-        degree, u_knotvector, v_knotvector, size, start, stop, sample_size
-    )
+    knots_u = bs_fit_cpp.linspace(start_u, stop_u, sample_num_u)
+    knots_v = bs_fit_cpp.linspace(start_v, stop_v, sample_num_v)
 
-    basis = bs_fit_cpp.toBasis(
-        degree, u_knotvector, v_knotvector, start, stop, sample_size, spans
-    )
+    spans_u = bs_fit_cpp.find_spans(degree_u, knotvector_u, size_u, knots_u)
+    spans_v = bs_fit_cpp.find_spans(degree_v, knotvector_v, size_v, knots_v)
+
+    basis_u = bs_fit_cpp.basis_functions(degree_u, knotvector_u, spans_u, knots_u)
+    basis_v = bs_fit_cpp.basis_functions(degree_v, knotvector_v, spans_v, knots_v)
 
     dtype = ctrlpts.dtype
     device = ctrlpts.device
 
-    eval_points = torch.zeros([sample_size[0] * sample_size[1], 3], dtype=dtype).to(
-        device
-    )
+    eval_points = torch.zeros([sample_num_u * sample_num_v, 3], dtype=dtype).to(device)
 
-    for i in range(len(spans[0])):
-        idx_u = spans[0][i] - degree[0]
+    for i in range(len(spans_u)):
+        idx_u = spans_u[i] - degree_u
 
-        for j in range(len(spans[1])):
-            idx_v = spans[1][j] - degree[1]
+        for j in range(len(spans_v)):
+            idx_v = spans_v[j] - degree_v
 
             spt = torch.zeros([3], dtype=dtype).to(device)
 
-            for k in range(degree[0] + 1):
+            for k in range(degree_u + 1):
                 temp = torch.zeros([3], dtype=dtype).to(device)
 
-                for l in range(degree[1] + 1):
+                for l in range(degree_v + 1):
                     temp = (
                         temp
-                        + basis[1][j][l] * ctrlpts[idx_v + l + (size[1] * (idx_u + k))]
+                        + basis_v[j][l] * ctrlpts[idx_v + l + (size_v * (idx_u + k))]
                     )
 
-                spt = spt + basis[0][i][k] * temp
+                spt = spt + basis_u[i][k] * temp
 
-            eval_points[i * len(spans[0]) + j] = spt
+            eval_points[i * len(spans_u) + j] = spt
 
     return eval_points

@@ -19,8 +19,8 @@ class BSplineSurface(object):
         degree_v: int = 3,
         size_u: int = 5,
         size_v: int = 7,
-        sample_u_num: int = 20,
-        sample_v_num: int = 20,
+        sample_num_u: int = 20,
+        sample_num_v: int = 20,
         start_u: float = 0.0,
         start_v: float = 0.0,
         stop_u: float = 1.0,
@@ -34,8 +34,8 @@ class BSplineSurface(object):
         self.degree_v = degree_v
         self.size_u = size_u
         self.size_v = size_v
-        self.sample_u_num = sample_u_num
-        self.sample_v_num = sample_v_num
+        self.sample_num_u = sample_num_u
+        self.sample_num_v = sample_num_v
         self.start_u = start_u
         self.start_v = start_v
         self.stop_u = stop_u
@@ -62,8 +62,8 @@ class BSplineSurface(object):
     def fromParamsDict(
         cls,
         params_dict: dict,
-        sample_u_num: int = 20,
-        sample_v_num: int = 20,
+        sample_num_u: int = 20,
+        sample_num_v: int = 20,
         start_u: float = 0.0,
         start_v: float = 0.0,
         stop_u: float = 1.0,
@@ -82,8 +82,8 @@ class BSplineSurface(object):
             degree_v,
             size_u,
             size_v,
-            sample_u_num,
-            sample_v_num,
+            sample_num_u,
+            sample_num_v,
             start_u,
             start_v,
             stop_u,
@@ -101,8 +101,8 @@ class BSplineSurface(object):
     def fromParamsFile(
         cls,
         params_file_path: str,
-        sample_u_num: int = 20,
-        sample_v_num: int = 20,
+        sample_num_u: int = 20,
+        sample_num_v: int = 20,
         start_u: float = 0.0,
         start_v: float = 0.0,
         stop_u: float = 1.0,
@@ -115,8 +115,8 @@ class BSplineSurface(object):
 
         return cls.fromParamsDict(
             params_dict,
-            sample_u_num,
-            sample_v_num,
+            sample_num_u,
+            sample_num_v,
             start_u,
             start_v,
             stop_u,
@@ -222,23 +222,20 @@ class BSplineSurface(object):
         return True
 
     def toSamplePoints(self) -> torch.Tensor:
-        degree = [self.degree_u, self.degree_v]
-        u_knotvector = self.knotvector_u.detach().clone().cpu().numpy().tolist()
-        v_knotvector = self.knotvector_v.detach().clone().cpu().numpy().tolist()
-        size = [self.size_u - 1, self.size_v - 1]
-        start = [self.start_u, self.start_v]
-        stop = [self.stop_u, self.stop_v]
-        sample_size = [self.sample_u_num, self.sample_v_num]
-
         sample_points = bs_fit_cpp.toTorchPoints(
-            degree,
-            u_knotvector,
-            v_knotvector,
+            self.degree_u,
+            self.degree_v,
+            self.size_u - 1,
+            self.size_v - 1,
+            self.sample_num_u,
+            self.sample_num_v,
+            self.start_u,
+            self.start_v,
+            self.stop_u,
+            self.stop_v,
+            self.knotvector_u.detach().clone().cpu().numpy().tolist(),
+            self.knotvector_v.detach().clone().cpu().numpy().tolist(),
             self.ctrlpts,
-            size,
-            start,
-            stop,
-            sample_size,
         )
 
         return sample_points

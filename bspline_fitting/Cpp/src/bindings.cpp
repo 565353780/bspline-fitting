@@ -11,8 +11,6 @@ PYBIND11_MODULE(bs_fit_cpp, m) {
   m.def("find_spans", &find_spans, "value.find_spans");
   m.def("basis_function", &basis_function, "value.basis_function");
   m.def("basis_functions", &basis_functions, "value.basis_functions");
-  m.def("toSpans", &toSpans, "value.toSpans");
-  m.def("toBasis", &toBasis, "value.toBasis");
   m.def("toPoints", &toPoints, "value.toPoints");
 
   m.def("toTorchPoints", &toTorchPoints, "value_torch.toTorchPoints");

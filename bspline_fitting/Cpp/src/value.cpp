@@ -102,95 +102,49 @@ basis_functions(const int &degree, const std::vector<float> &knot_vector,
   return basis;
 }
 
-const std::vector<std::vector<int>>
-toSpans(const std::vector<int> &degree, const std::vector<float> &u_knotvector,
-        const std::vector<float> &v_knotvector, const std::vector<int> &size,
-        const std::vector<float> &start, const std::vector<float> &stop,
-        const std::vector<int> &sample_size) {
-  std::vector<std::vector<int>> spans(2);
-
-  for (int idx = 0; idx < 2; ++idx) {
-    const std::vector<float> knots =
-        linspace(start[idx], stop[idx], sample_size[idx]);
-
-    std::vector<float> knotvector;
-    if (idx == 0) {
-      knotvector = u_knotvector;
-    } else {
-      knotvector = v_knotvector;
-    }
-
-    const std::vector<int> current_spans =
-        find_spans(degree[idx], knotvector, size[idx], knots);
-
-    spans[idx] = current_spans;
-  }
-
-  return spans;
-}
-
-const std::vector<std::vector<std::vector<float>>>
-toBasis(const std::vector<int> &degree, const std::vector<float> &u_knotvector,
-        const std::vector<float> &v_knotvector, const std::vector<float> &start,
-        const std::vector<float> &stop, const std::vector<int> &sample_size,
-        const std::vector<std::vector<int>> spans) {
-  std::vector<std::vector<std::vector<float>>> basis(2);
-
-  for (int idx = 0; idx < 2; ++idx) {
-    const std::vector<float> knots =
-        linspace(start[idx], stop[idx], sample_size[idx]);
-
-    std::vector<float> knotvector;
-    if (idx == 0) {
-      knotvector = u_knotvector;
-    } else {
-      knotvector = v_knotvector;
-    }
-
-    const std::vector<std::vector<float>> current_basis =
-        basis_functions(degree[idx], knotvector, spans[idx], knots);
-
-    basis[idx] = current_basis;
-  }
-
-  return basis;
-}
-
 const std::vector<std::vector<float>>
-toPoints(const std::vector<int> &degree, const std::vector<float> &u_knotvector,
-         const std::vector<float> &v_knotvector,
-         const std::vector<std::vector<float>> &ctrlpts,
-         const std::vector<int> &size, const std::vector<float> &start,
-         const std::vector<float> &stop, const std::vector<int> &sample_size) {
-  const std::vector<std::vector<int>> spans = toSpans(
-      degree, u_knotvector, v_knotvector, size, start, stop, sample_size);
+toPoints(const int &degree_u, const int &degree_v, const int &size_u,
+         const int &size_v, const int &sample_num_u, const int &sample_num_v,
+         const float &start_u, const float &start_v, const float &stop_u,
+         const float &stop_v, const std::vector<float> &knotvector_u,
+         const std::vector<float> &knotvector_v,
+         const std::vector<std::vector<float>> &ctrlpts) {
+  const std::vector<float> knots_u = linspace(start_u, stop_u, sample_num_u);
+  const std::vector<float> knots_v = linspace(start_v, stop_v, sample_num_v);
 
-  const std::vector<std::vector<std::vector<float>>> basis = toBasis(
-      degree, u_knotvector, v_knotvector, start, stop, sample_size, spans);
+  const std::vector<int> spans_u =
+      find_spans(degree_u, knotvector_u, size_u, knots_u);
+  const std::vector<int> spans_v =
+      find_spans(degree_v, knotvector_v, size_v, knots_v);
+
+  const std::vector<std::vector<float>> basis_u =
+      basis_functions(degree_u, knotvector_u, spans_u, knots_u);
+  const std::vector<std::vector<float>> basis_v =
+      basis_functions(degree_v, knotvector_v, spans_v, knots_v);
 
   std::vector<std::vector<float>> eval_points;
 
-  for (size_t i = 0; i < spans[0].size(); ++i) {
-    const int idx_u = spans[0][i] - degree[0];
+  for (size_t i = 0; i < spans_u.size(); ++i) {
+    const int idx_u = spans_u[i] - degree_u;
 
-    for (size_t j = 0; j < spans[1].size(); ++j) {
-      const int idx_v = spans[1][j] - degree[1];
+    for (size_t j = 0; j < spans_v.size(); ++j) {
+      const int idx_v = spans_v[j] - degree_v;
 
       std::vector<float> spt(3, 0.0);
 
-      for (int k = 0; k < degree[0] + 1; ++k) {
+      for (int k = 0; k < degree_u + 1; ++k) {
         std::vector<float> temp(3, 0.0);
 
-        for (int l = 0; l < degree[1] + 1; ++l) {
+        for (int l = 0; l < degree_v + 1; ++l) {
           for (size_t m = 0; m < temp.size(); ++m) {
-            const float cp = ctrlpts[idx_v + l + (size[1] * (idx_u + k))][m];
+            const float cp = ctrlpts[idx_v + l + (size_v * (idx_u + k))][m];
 
-            temp[m] += basis[1][j][l] * cp;
+            temp[m] += basis_v[j][l] * cp;
           }
         }
 
         for (size_t l = 0; l < spt.size(); ++l) {
-          spt[l] += basis[0][i][k] * temp[l];
+          spt[l] += basis_u[i][k] * temp[l];
         }
       }
 

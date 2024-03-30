@@ -13,8 +13,8 @@ def demo():
     degree_v = 3
     size_u = 7
     size_v = 7
-    sample_u_num = 20
-    sample_v_num = 20
+    sample_num_u = 20
+    sample_num_v = 20
     start_u = 0.0
     start_v = 0.0
     stop_u = 1.0
@@ -60,8 +60,8 @@ def demo():
         degree_v,
         size_u,
         size_v,
-        sample_u_num,
-        sample_v_num,
+        sample_num_u,
+        sample_num_v,
         start_u,
         start_v,
         stop_u,

@@ -21,21 +21,10 @@ const std::vector<std::vector<float>>
 basis_functions(const int &degree, const std::vector<float> &knot_vector,
                 const std::vector<int> &spans, const std::vector<float> &knots);
 
-const std::vector<std::vector<int>>
-toSpans(const std::vector<int> &degree, const std::vector<float> &u_knotvector,
-        const std::vector<float> &v_knotvector, const std::vector<int> &size,
-        const std::vector<float> &start, const std::vector<float> &stop,
-        const std::vector<int> &sample_size);
-
-const std::vector<std::vector<std::vector<float>>>
-toBasis(const std::vector<int> &degree, const std::vector<float> &u_knotvector,
-        const std::vector<float> &v_knotvector, const std::vector<float> &start,
-        const std::vector<float> &stop, const std::vector<int> &sample_size,
-        const std::vector<std::vector<int>> spans);
-
 const std::vector<std::vector<float>>
-toPoints(const std::vector<int> &degree, const std::vector<float> &u_knotvector,
-         const std::vector<float> &v_knotvector,
-         const std::vector<std::vector<float>> &ctrlpts,
-         const std::vector<int> &size, const std::vector<float> &start,
-         const std::vector<float> &stop, const std::vector<int> &sample_size);
+toPoints(const int &degree_u, const int &degree_v, const int &size_u,
+         const int &size_v, const int &sample_num_u, const int &sample_num_v,
+         const float &start_u, const float &start_v, const float &stop_u,
+         const float &stop_v, const std::vector<float> &knotvector_u,
+         const std::vector<float> &knotvector_v,
+         const std::vector<std::vector<float>> &ctrlpts);
