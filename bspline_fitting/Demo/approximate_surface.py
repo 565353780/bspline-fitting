@@ -2,7 +2,6 @@ import numpy as np
 import open3d as o3d
 
 from bspline_fitting.Method.fitting import approximate_surface
-from bspline_fitting.Method.value import evaluate
 from bspline_fitting.Model.bspline_surface import BSplineSurface
 
 
