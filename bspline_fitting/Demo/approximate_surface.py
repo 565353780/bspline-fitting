@@ -30,7 +30,7 @@ def demo():
     ctrlpts_size_v = None
 
     surf = approximate_surface(
-        TEST_POINTS,
+        points,
         size_u,
         size_v,
         degree_u,
@@ -40,18 +40,17 @@ def demo():
         ctrlpts_size_v,
     )
 
-    for _ in trange(100):
-        point2 = evaluate(surf.data)
-    print(np.array(point2).shape)
-
-    exit()
-
     evalpts = np.array(surf.evalpts)
     fitting_pcd = o3d.geometry.PointCloud()
     fitting_pcd.points = o3d.utility.Vector3dVector(evalpts)
 
-    crop_pcd.translate([1.0, 0, 0])
-    # fitting_pcd.translate([0, 1, 0])
+    sample_points = np.array(evaluate(surf.data))
+    sample_fitting_pcd = o3d.geometry.PointCloud()
+    sample_fitting_pcd.points = o3d.utility.Vector3dVector(sample_points)
 
-    o3d.visualization.draw_geometries([mesh, crop_pcd, fitting_pcd])
+    crop_pcd.translate([1, 0, 0])
+    # fitting_pcd.translate([0, 1, 0])
+    sample_fitting_pcd.translate([0, 1, 0])
+
+    o3d.visualization.draw_geometries([mesh, crop_pcd, fitting_pcd, sample_fitting_pcd])
     return True
