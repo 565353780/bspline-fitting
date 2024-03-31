@@ -4,6 +4,7 @@ import numpy as np
 import gradio as gr
 import open3d as o3d
 
+from bspline_fitting.Method.render import toPlotFigure
 from bspline_fitting.Module.trainer import Trainer
 
 
@@ -27,7 +28,7 @@ def fitBSplineSurface(
     factor: float,
     patience: int,
     min_lr: float,
-) -> str:
+):
     print("input_pcd_file_path:", input_pcd_file_path)
     if not os.path.exists(input_pcd_file_path):
         print("[ERROR][Server::fitBSplineSurface]")
@@ -89,7 +90,14 @@ def fitBSplineSurface(
         save_pcd_file_path, overwrite, print_progress, [1.0, 1.0, 1.0]
     )
 
-    return save_pcd_file_path
+    sample_points = (
+        trainer.bspline_surface.toSamplePoints().detach().clone().cpu().numpy()
+    )
+
+    gt_plot_figure = toPlotFigure(gt_points)
+    sample_plot_figure = toPlotFigure(sample_points)
+
+    return save_pcd_file_path, gt_plot_figure, sample_plot_figure
 
 
 class Server(object):
@@ -121,6 +129,10 @@ class Server(object):
                     clear_color=[0.0, 0.0, 0.0, 0.0],
                     label="Fitting BSpline Sample Points",
                 )
+
+            with gr.Row():
+                visual_gt_plot = gr.Plot()
+                visual_sample_plot = gr.Plot()
 
             with gr.Accordion(label="BSpline Params", open=False):
                 degree_u = gr.Slider(0, 10, value=3, step=1, label="degree_u")
@@ -179,7 +191,7 @@ class Server(object):
             submit_button.click(
                 fn=fitBSplineSurface,
                 inputs=[input_pcd] + bspline_params + fitting_params,
-                outputs=[output_pcd],
+                outputs=[output_pcd, visual_gt_plot, visual_sample_plot],
             )
 
         iface.launch(server_name="0.0.0.0", server_port=self.port)
