@@ -1,3 +1,4 @@
+import os
 import torch
 import numpy as np
 import gradio as gr
@@ -24,8 +25,8 @@ mac_examples = [
 ]
 
 
-def load_mesh(
-    mesh_file_path: str,
+def fitBSplineSurface(
+    input_pcd_file_path: str,
     degree_u: int,
     degree_v: int,
     size_u: int,
@@ -38,15 +39,73 @@ def load_mesh(
     stop_v: float,
     warm_epoch_step_num: int,
     warm_epoch_num: int,
-    finetune_epoch_num: int,
+    finetune_step_num: int,
     lr: float,
     weight_decay: float,
     factor: float,
-    patience: float,
+    patience: int,
     min_lr: float,
-):
-    print("mesh_file_path:", mesh_file_path)
-    return mesh_file_path
+) -> str:
+    print("input_pcd_file_path:", input_pcd_file_path)
+    if not os.path.exists(input_pcd_file_path):
+        print("[ERROR][Server::fitBSplineSurface]")
+        print("\t input pcd file not exist!")
+        print("\t input_pcd_file_path:", input_pcd_file_path)
+        return ""
+
+    idx_dtype = torch.int64
+    dtype = torch.float64
+    device = "cpu"
+
+    render = True
+    render_freq = 1
+    render_init_only = False
+
+    save_result_folder_path = None
+    save_log_folder_path = None
+
+    input_pcd_file_name = input_pcd_file_path.split("/")[-1]
+    save_pcd_file_path = "./output/" + input_pcd_file_name
+    overwrite = True
+    print_progress = True
+
+    pcd = o3d.io.read_point_cloud(input_pcd_file_path)
+
+    gt_points = np.asarray(pcd.points)
+
+    trainer = Trainer(
+        degree_u,
+        degree_v,
+        size_u,
+        size_v,
+        sample_num_u,
+        sample_num_v,
+        start_u,
+        start_v,
+        stop_u,
+        stop_v,
+        idx_dtype,
+        dtype,
+        device,
+        warm_epoch_step_num,
+        warm_epoch_num,
+        finetune_step_num,
+        lr,
+        weight_decay,
+        factor,
+        patience,
+        min_lr,
+        render,
+        render_freq,
+        render_init_only,
+        save_result_folder_path,
+        save_log_folder_path,
+    )
+
+    trainer.autoTrainBSplineSurface(gt_points)
+    trainer.bspline_surface.saveAsPcdFile(save_pcd_file_path, overwrite, print_progress)
+
+    return save_pcd_file_path
 
 
 class Server(object):
@@ -60,13 +119,13 @@ class Server(object):
 
             with gr.Row():
                 with gr.Column():
-                    input_mesh = gr.Model3D(label="3D Data to be fitted")
+                    input_pcd = gr.Model3D(label="3D Data to be fitted")
 
-                    gr.Examples(examples=mac_examples, inputs=input_mesh)
+                    gr.Examples(examples=mac_examples, inputs=input_pcd)
 
                     submit_button = gr.Button("Fitting")
 
-                output_mesh = gr.Model3D(
+                output_pcd = gr.Model3D(
                     clear_color=[0.0, 0.0, 0.0, 0.0],
                     label="Fitting BSpline Sample Points",
                 )
@@ -103,8 +162,8 @@ class Server(object):
                 warm_epoch_num = gr.Slider(
                     0, 10, value=4, step=1, label="warm_epoch_num"
                 )
-                finetune_epoch_num = gr.Slider(
-                    0, 1000, value=400, step=1, label="finetune_epoch_num"
+                finetune_step_num = gr.Slider(
+                    0, 1000, value=400, step=1, label="finetune_step_num"
                 )
                 lr = gr.Slider(1e-6, 1.0, value=5e-2, step=1e-10, label="lr")
                 weight_decay = gr.Slider(
@@ -117,7 +176,7 @@ class Server(object):
             fitting_params = [
                 warm_epoch_step_num,
                 warm_epoch_num,
-                finetune_epoch_num,
+                finetune_step_num,
                 lr,
                 weight_decay,
                 factor,
@@ -126,9 +185,9 @@ class Server(object):
             ]
 
             submit_button.click(
-                fn=load_mesh,
-                inputs=[input_mesh] + bspline_params + fitting_params,
-                outputs=[output_mesh],
+                fn=fitBSplineSurface,
+                inputs=[input_pcd] + bspline_params + fitting_params,
+                outputs=[output_pcd],
             )
 
         iface.launch(server_name="0.0.0.0", server_port=self.port)
