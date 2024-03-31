@@ -287,6 +287,7 @@ class BSplineSurface(object):
         save_pcd_file_path: str,
         overwrite: bool = False,
         print_progress: bool = False,
+        uniform_color=None,
     ) -> bool:
         if os.path.exists(save_pcd_file_path):
             if overwrite:
@@ -303,6 +304,8 @@ class BSplineSurface(object):
 
         pcd = o3d.geometry.PointCloud()
         pcd.points = o3d.utility.Vector3dVector(points)
+        if uniform_color is not None:
+            pcd.paint_uniform_color(uniform_color)
 
         if print_progress:
             print("[INFO][BSplineSurface::saveAsPcdFile]")

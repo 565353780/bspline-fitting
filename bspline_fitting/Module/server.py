@@ -4,25 +4,7 @@ import numpy as np
 import gradio as gr
 import open3d as o3d
 
-from bspline_fitting.Config.custom_path import mesh_file_path_dict
 from bspline_fitting.Module.trainer import Trainer
-
-
-linux_examples = [
-    [mesh_file_path_dict["linux_bunny"]],
-    [mesh_file_path_dict["linux_airplane"]],
-    [mesh_file_path_dict["linux_plane"]],
-    [mesh_file_path_dict["linux_1"]],
-    [mesh_file_path_dict["linux_2"]],
-]
-mac_examples = [
-    [mesh_file_path_dict["mac_bunny"]],
-    [mesh_file_path_dict["mac_airplane"]],
-    [mesh_file_path_dict["mac_plane"]],
-    [mesh_file_path_dict["mac_chair_0"]],
-    [mesh_file_path_dict["mac_chair_1"]],
-    [mesh_file_path_dict["mac_chair_2"]],
-]
 
 
 def fitBSplineSurface(
@@ -57,7 +39,7 @@ def fitBSplineSurface(
     dtype = torch.float64
     device = "cpu"
 
-    render = True
+    render = False
     render_freq = 1
     render_init_only = False
 
@@ -103,7 +85,9 @@ def fitBSplineSurface(
     )
 
     trainer.autoTrainBSplineSurface(gt_points)
-    trainer.bspline_surface.saveAsPcdFile(save_pcd_file_path, overwrite, print_progress)
+    trainer.bspline_surface.saveAsPcdFile(
+        save_pcd_file_path, overwrite, print_progress, [1.0, 1.0, 1.0]
+    )
 
     return save_pcd_file_path
 
@@ -114,6 +98,14 @@ class Server(object):
         return
 
     def start(self) -> bool:
+        example_folder_path = "./output/input_pcd/"
+        example_file_name_list = os.listdir(example_folder_path)
+
+        examples = [
+            example_folder_path + example_file_name
+            for example_file_name in example_file_name_list
+        ]
+
         with gr.Blocks() as iface:
             gr.Markdown("BSpline Fitting Demo")
 
@@ -121,7 +113,7 @@ class Server(object):
                 with gr.Column():
                     input_pcd = gr.Model3D(label="3D Data to be fitted")
 
-                    gr.Examples(examples=mac_examples, inputs=input_pcd)
+                    gr.Examples(examples=examples, inputs=input_pcd)
 
                     submit_button = gr.Button("Fitting")
 
