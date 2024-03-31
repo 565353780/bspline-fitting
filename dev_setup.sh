@@ -17,5 +17,5 @@ pip install -U torch torchvision torchaudio
 cd ../ma-sh
 ./compile.sh
 
-pip install -U tqdm tensorboard matplotlib
+pip install -U tqdm tensorboard matplotlib gradio
 pip install open3d==0.15.1
