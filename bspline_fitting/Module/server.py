@@ -210,5 +210,11 @@ class Server(object):
                 outputs=[output_pcd, visual_sample_plot],
             )
 
-        iface.launch(server_name="0.0.0.0", server_port=self.port)
+        iface.launch(
+            server_name="0.0.0.0",
+            server_port=self.port,
+            ssl_keyfile="./ssl/key.pem",
+            ssl_certfile="./ssl/cert.pem",
+            ssl_verify=False,
+        )
         return True
