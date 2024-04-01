@@ -6,8 +6,10 @@ cd geom-dl
 
 if [ "$(uname)" == "Darwin" ]; then
 	brew install bear
+	pip install open3d==0.15.1
 elif [ "$(uname)" = "Linux" ]; then
 	sudo apt install bear -y
+	pip install -U open3d
 fi
 
 pip install -U ninja
@@ -18,4 +20,3 @@ cd ../bspline-fitting
 ./compile.sh
 
 pip install -U tqdm tensorboard matplotlib gradio plotly
-pip install open3d==0.15.1
