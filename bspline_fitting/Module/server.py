@@ -8,6 +8,14 @@ from bspline_fitting.Method.render import toPlotFigure
 from bspline_fitting.Module.trainer import Trainer
 
 
+def renderInputData(input_pcd_file_path: str):
+    pcd = o3d.io.read_point_cloud(input_pcd_file_path)
+
+    gt_points = np.asarray(pcd.points)
+
+    return toPlotFigure(gt_points)
+
+
 def fitBSplineSurface(
     input_pcd_file_path: str,
     degree_u: int,
@@ -87,22 +95,23 @@ def fitBSplineSurface(
 
     trainer.autoTrainBSplineSurface(gt_points)
     trainer.bspline_surface.saveAsPcdFile(
-        save_pcd_file_path, overwrite, print_progress, [1.0, 1.0, 1.0]
+        save_pcd_file_path, overwrite, print_progress, [0.0, 1.0, 0.0]
     )
 
     sample_points = (
         trainer.bspline_surface.toSamplePoints().detach().clone().cpu().numpy()
     )
 
-    gt_plot_figure = toPlotFigure(gt_points)
     sample_plot_figure = toPlotFigure(sample_points)
 
-    return save_pcd_file_path, gt_plot_figure, sample_plot_figure
+    return save_pcd_file_path, sample_plot_figure
 
 
 class Server(object):
     def __init__(self, port: int) -> None:
         self.port = port
+
+        self.input_data = None
         return
 
     def start(self) -> bool:
@@ -123,15 +132,16 @@ class Server(object):
 
                     gr.Examples(examples=examples, inputs=input_pcd)
 
-                    submit_button = gr.Button("Fitting")
+                    submit_button = gr.Button("Submit to server")
 
-                output_pcd = gr.Model3D(
-                    clear_color=[0.0, 0.0, 0.0, 0.0],
-                    label="Fitting BSpline Sample Points",
-                )
+                output_pcd = gr.Model3D(label="BSpline Surface Sample Points")
 
             with gr.Row():
-                visual_gt_plot = gr.Plot()
+                with gr.Column():
+                    visual_gt_plot = gr.Plot()
+
+                    fit_button = gr.Button("Click to start fitting")
+
                 visual_sample_plot = gr.Plot()
 
             with gr.Accordion(label="BSpline Params", open=False):
@@ -189,9 +199,15 @@ class Server(object):
             ]
 
             submit_button.click(
+                fn=renderInputData,
+                inputs=[input_pcd],
+                outputs=[visual_gt_plot],
+            )
+
+            fit_button.click(
                 fn=fitBSplineSurface,
                 inputs=[input_pcd] + bspline_params + fitting_params,
-                outputs=[output_pcd, visual_gt_plot, visual_sample_plot],
+                outputs=[output_pcd, visual_sample_plot],
             )
 
         iface.launch(server_name="0.0.0.0", server_port=self.port)
