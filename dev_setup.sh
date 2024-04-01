@@ -16,7 +16,7 @@ pip install -U ninja
 
 pip install -U torch torchvision torchaudio
 
-cd ../ma-sh
+cd ../bspline-fitting
 ./compile.sh
 
 pip install -U tqdm tensorboard matplotlib gradio plotly
