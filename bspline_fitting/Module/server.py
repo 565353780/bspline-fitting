@@ -61,8 +61,9 @@ def fitBSplineSurface(
     print_progress = True
 
     pcd = o3d.io.read_point_cloud(input_pcd_file_path)
+    scales = np.max(pcd.get_axis_aligned_bounding_box().get_extent())
 
-    gt_points = np.asarray(pcd.points)
+    gt_points = np.asarray(pcd.points) / scales
 
     trainer = Trainer(
         degree_u,
