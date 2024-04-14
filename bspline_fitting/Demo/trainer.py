@@ -40,14 +40,20 @@ def demo():
 
     mesh_name = "mac_airplane"
 
-    mesh_file_path = mesh_file_path_dict[mesh_name]
-    mesh = o3d.io.read_triangle_mesh(mesh_file_path)
-    pcd = mesh.sample_points_uniformly(10000, use_triangle_normal=True)
-    abb = o3d.geometry.AxisAlignedBoundingBox(
-        np.array([0.0, 0.0, 0.0]), np.array([0.5, 0.5, 0.5])
-    )
-    crop_pcd = pcd.crop(abb)
-    gt_points = np.asarray(crop_pcd.points)
+    if False:
+        mesh_file_path = mesh_file_path_dict[mesh_name]
+        mesh = o3d.io.read_triangle_mesh(mesh_file_path)
+        pcd = mesh.sample_points_uniformly(10000, use_triangle_normal=True)
+        abb = o3d.geometry.AxisAlignedBoundingBox(
+            np.array([0.0, 0.0, 0.0]), np.array([0.5, 0.5, 0.5])
+        )
+        crop_pcd = pcd.crop(abb)
+        gt_points = np.asarray(crop_pcd.points)
+
+    if True:
+        pcd_file_path = "./output/input_pcd/airplane_0.ply"
+        crop_pcd = o3d.io.read_point_cloud(pcd_file_path)
+        gt_points = np.asarray(crop_pcd.points)
 
     save_params_file_path = "./output/" + mesh_name + ".npy"
     save_pcd_file_path = "./output/" + mesh_name + ".ply"
