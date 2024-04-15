@@ -1,6 +1,7 @@
 import os
 import torch
 import numpy as np
+import open3d as o3d
 from tqdm import tqdm
 from typing import Union
 from copy import deepcopy
@@ -360,15 +361,66 @@ class Trainer(object):
         if isinstance(gt_points, list) or isinstance(gt_points, tuple):
             gt_points = np.array(gt_points)
 
-        surf = approximate_surface(
-            gt_points,
-            self.bspline_surface.size_u,
-            self.bspline_surface.size_v,
-            self.bspline_surface.degree_u,
-            self.bspline_surface.degree_v,
+        gt_pcd = o3d.geometry.PointCloud()
+        gt_pcd.points = o3d.utility.Vector3dVector(gt_points)
+        target_sample_point_num = (
+            4 * self.bspline_surface.sample_num_u * self.bspline_surface.sample_num_v
         )
+        try:
+            downsample_pcd = gt_pcd.farthest_point_down_sample(target_sample_point_num)
+        except:
+            downsample_pcd = gt_pcd.uniform_down_sample(
+                int(gt_points.shape[0] / target_sample_point_num)
+            )
 
-        self.bspline_surface.loadParams(ctrlpts=surf.data["control_points"])
+        gt_points = np.asarray(downsample_pcd.points)
+
+        max_point = np.max(gt_points, axis=0)
+        min_point = np.min(gt_points, axis=0)
+        center = (max_point + min_point) / 2.0
+        scale = np.max(max_point - min_point)
+
+        gt_points = (gt_points - center) / scale
+
+        if False:
+            surf = approximate_surface(
+                gt_points,
+                self.bspline_surface.size_u,
+                self.bspline_surface.size_v,
+                self.bspline_surface.degree_u,
+                self.bspline_surface.degree_v,
+            )
+            ctrlpts = np.array(surf.data["control_points"])
+
+            self.bspline_surface.loadParams(ctrlpts=ctrlpts)
+        else:
+            ctrlpts = np.zeros(
+                [
+                    self.bspline_surface.size_u - 1,
+                    self.bspline_surface.size_v - 1,
+                    3,
+                ],
+                dtype=float,
+            )
+
+            u_values = (
+                np.arange(self.bspline_surface.size_u - 1)
+                / (self.bspline_surface.size_u - 2)
+            ) - 0.5
+
+            v_values = (
+                np.arange(self.bspline_surface.size_v - 1)
+                / (self.bspline_surface.size_v - 2)
+            ) - 0.5
+
+            for i in range(self.bspline_surface.size_u - 1):
+                ctrlpts[:, i, 0] = u_values
+            for i in range(self.bspline_surface.size_v - 1):
+                ctrlpts[i, :, 1] = v_values
+
+            ctrlpts = ctrlpts.reshape(-1, 3) * 0.4
+
+            self.bspline_surface.loadParams(ctrlpts=ctrlpts)
 
         gt_points = torch.from_numpy(gt_points)
 

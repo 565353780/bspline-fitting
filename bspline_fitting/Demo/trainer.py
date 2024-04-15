@@ -51,7 +51,7 @@ def demo():
         gt_points = np.asarray(crop_pcd.points)
 
     if True:
-        pcd_file_path = "./output/input_pcd/airplane_0.ply"
+        pcd_file_path = "./output/input_pcd/test-demo-up.ply"
         crop_pcd = o3d.io.read_point_cloud(pcd_file_path)
         gt_points = np.asarray(crop_pcd.points)
 

@@ -7,6 +7,7 @@ build
 compile_commands.json
 tmp
 ssl
+.DS_Store
 
 
 
