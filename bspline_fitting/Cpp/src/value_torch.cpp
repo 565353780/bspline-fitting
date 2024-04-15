@@ -10,7 +10,7 @@ basis_function_torch(const int &degree, const torch::Tensor &knot_vector,
 
   std::vector<torch::Tensor> left(degree + 1, torch::zeros({1}, opts));
   std::vector<torch::Tensor> right(degree + 1, torch::zeros({1}, opts));
-  std::vector<torch::Tensor> N(degree + 1, torch::zeros({1}, opts));
+  std::vector<torch::Tensor> N(degree + 1, torch::ones({1}, opts));
 
   for (int j = 1; j < degree + 1; ++j) {
     left[j] = knot - knot_vector[span + 1 - j];
