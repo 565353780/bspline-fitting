@@ -2,7 +2,7 @@ import os
 import torch
 import numpy as np
 import open3d as o3d
-from typing import Union
+from typing import Union, Tuple
 
 import bs_fit_cpp
 
@@ -220,7 +220,7 @@ class BSplineSurface(object):
 
         return True
 
-    def toSamplePoints(self) -> torch.Tensor:
+    def toFullKnotvectors(self) -> Tuple[torch.Tensor, torch.Tensor]:
         full_knotvector_u = torch.zeros(
             [self.degree_u + self.size_u], dtype=self.knotvector_u.dtype
         ).to(self.knotvector_u.device)
@@ -249,7 +249,12 @@ class BSplineSurface(object):
                 full_knotvector_v[self.degree_v + i] + normed_sigmoid_knotvector_v[i]
             )
 
-        sample_points = toTorchPoints(
+        return full_knotvector_u, full_knotvector_v
+
+    def toSamplePoints(self) -> torch.Tensor:
+        full_knotvector_u, full_knotvector_v = self.toFullKnotvectors()
+
+        sample_points = bs_fit_cpp.toTorchPoints(
             self.degree_u,
             self.degree_v,
             self.size_u - 1,
