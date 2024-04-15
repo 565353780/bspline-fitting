@@ -366,14 +366,15 @@ class Trainer(object):
         target_sample_point_num = (
             4 * self.bspline_surface.sample_num_u * self.bspline_surface.sample_num_v
         )
-        try:
-            downsample_pcd = gt_pcd.farthest_point_down_sample(target_sample_point_num)
-        except:
-            downsample_pcd = gt_pcd.uniform_down_sample(
-                int(gt_points.shape[0] / target_sample_point_num)
-            )
+        if target_sample_point_num < gt_points.shape[0]:
+            try:
+                downsample_pcd = gt_pcd.farthest_point_down_sample(target_sample_point_num)
+            except:
+                downsample_pcd = gt_pcd.uniform_down_sample(
+                    int(gt_points.shape[0] / target_sample_point_num)
+                )
 
-        gt_points = np.asarray(downsample_pcd.points)
+            gt_points = np.asarray(downsample_pcd.points)
 
         max_point = np.max(gt_points, axis=0)
         min_point = np.min(gt_points, axis=0)
@@ -460,6 +461,8 @@ class Trainer(object):
             self.trainBSplineSurface(optimizer, finetune_scheduler, gt_points)
 
             break
+
+        self.bspline_surface.ctrlpts.data = self.bspline_surface.ctrlpts.data * scale + torch.from_numpy(center)
 
         return True
 
