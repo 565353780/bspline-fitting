@@ -368,11 +368,7 @@ class Trainer(object):
             self.bspline_surface.degree_v,
         )
 
-        self.bspline_surface.loadParams(
-            surf.data["knotvector"][0],
-            surf.data["knotvector"][1],
-            surf.data["control_points"],
-        )
+        self.bspline_surface.loadParams(ctrlpts=surf.data["control_points"])
 
         gt_points = torch.from_numpy(gt_points)
 

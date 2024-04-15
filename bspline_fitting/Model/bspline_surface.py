@@ -46,10 +46,10 @@ class BSplineSurface(object):
 
         # Diff Params
         self.knotvector_u = torch.zeros(
-            self.degree_u + self.size_u, dtype=self.dtype
+            self.size_u - self.degree_u - 1, dtype=self.dtype
         ).to(self.device)
         self.knotvector_v = torch.zeros(
-            self.degree_v + self.size_v, dtype=self.dtype
+            self.size_v - self.degree_v - 1, dtype=self.dtype
         ).to(self.device)
         self.ctrlpts = torch.zeros(
             [(self.size_u - 1) * (self.size_v - 1), 3], dtype=self.dtype
@@ -131,9 +131,8 @@ class BSplineSurface(object):
         return True
 
     def setGradState(self, need_grad: bool) -> bool:
-        # FIXME: next stage: make knots learnable
-        # self.knotvector_u.requires_grad_(need_grad)
-        # self.knotvector_v.requires_grad_(need_grad)
+        self.knotvector_u.requires_grad_(need_grad)
+        self.knotvector_v.requires_grad_(need_grad)
         self.ctrlpts.requires_grad_(need_grad)
         return True
 
@@ -222,7 +221,35 @@ class BSplineSurface(object):
         return True
 
     def toSamplePoints(self) -> torch.Tensor:
-        sample_points = bs_fit_cpp.toTorchPoints(
+        full_knotvector_u = torch.zeros(
+            [self.degree_u + self.size_u], dtype=self.knotvector_u.dtype
+        ).to(self.knotvector_u.device)
+        full_knotvector_v = torch.zeros(
+            [self.degree_v + self.size_v], dtype=self.knotvector_v.dtype
+        ).to(self.knotvector_v.device)
+
+        full_knotvector_u[-self.degree_u - 1 :] = 1.0
+        full_knotvector_v[-self.degree_v - 1 :] = 1.0
+
+        sigmoid_knotvector_u = torch.sigmoid(self.knotvector_u)
+        sigmoid_knotvector_v = torch.sigmoid(self.knotvector_v)
+
+        sigmoid_knotvector_u_sum = torch.sum(sigmoid_knotvector_u)
+        sigmoid_knotvector_v_sum = torch.sum(sigmoid_knotvector_v)
+
+        normed_sigmoid_knotvector_u = sigmoid_knotvector_u / sigmoid_knotvector_u_sum
+        normed_sigmoid_knotvector_v = sigmoid_knotvector_v / sigmoid_knotvector_v_sum
+
+        for i in range(normed_sigmoid_knotvector_u.shape[0] - 1):
+            full_knotvector_u[self.degree_u + 1 + i] = (
+                full_knotvector_u[self.degree_u + i] + normed_sigmoid_knotvector_u[i]
+            )
+        for i in range(normed_sigmoid_knotvector_v.shape[0] - 1):
+            full_knotvector_v[self.degree_v + 1 + i] = (
+                full_knotvector_v[self.degree_v + i] + normed_sigmoid_knotvector_v[i]
+            )
+
+        sample_points = toTorchPoints(
             self.degree_u,
             self.degree_v,
             self.size_u - 1,
@@ -233,8 +260,8 @@ class BSplineSurface(object):
             self.start_v,
             self.stop_u,
             self.stop_v,
-            self.knotvector_u.detach().clone().cpu().numpy().tolist(),
-            self.knotvector_v.detach().clone().cpu().numpy().tolist(),
+            full_knotvector_u,
+            full_knotvector_v,
             self.ctrlpts,
         )
 

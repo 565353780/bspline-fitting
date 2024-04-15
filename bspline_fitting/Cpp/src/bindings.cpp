@@ -13,5 +13,9 @@ PYBIND11_MODULE(bs_fit_cpp, m) {
   m.def("basis_functions", &basis_functions, "value.basis_functions");
   m.def("toPoints", &toPoints, "value.toPoints");
 
+  m.def("basis_function_torch", &basis_function_torch,
+        "value_torch.basis_function_torch");
+  m.def("basis_functions_torch", &basis_functions_torch,
+        "value_torch.basis_functions_torch");
   m.def("toTorchPoints", &toTorchPoints, "value_torch.toTorchPoints");
 }

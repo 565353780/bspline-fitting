@@ -1,25 +1,82 @@
 #include "value_torch.h"
 #include "value.h"
 
-const torch::Tensor toTorchPoints(
-    const int &degree_u, const int &degree_v, const int &size_u,
-    const int &size_v, const int &sample_num_u, const int &sample_num_v,
-    const float &start_u, const float &start_v, const float &stop_u,
-    const float &stop_v, const std::vector<float> &knotvector_u,
-    const std::vector<float> &knotvector_v, const torch::Tensor &ctrlpts) {
+const torch::Tensor basis_function_torch(const int &degree,
+                                         const torch::Tensor &knot_vector,
+                                         const int &span, const float &knot) {
+  const torch::TensorOptions opts = torch::TensorOptions()
+                                        .dtype(knot_vector.dtype())
+                                        .device(knot_vector.device());
+
+  torch::Tensor left = torch::zeros({degree + 1}, opts);
+  torch::Tensor right = torch::zeros({degree + 1}, opts);
+  torch::Tensor N = torch::zeros({degree + 1}, opts);
+
+  for (int j = 1; j < degree + 1; ++j) {
+    left[j] = knot - knot_vector[span + 1 - j];
+    right[j] = knot_vector[span + j] - knot;
+
+    torch::Tensor saved = torch::zeros({1}, opts);
+
+    for (int r = 0; r < j; ++r) {
+      const torch::Tensor temp = N[r] / (right[r + 1] + left[j - r]);
+      N[r] = saved + right[r + 1] * temp;
+      saved = left[j - r] * temp;
+    }
+
+    N[j] = saved;
+  }
+
+  return N;
+}
+
+const std::vector<torch::Tensor>
+basis_functions_torch(const int &degree, const torch::Tensor &knot_vector,
+                      const std::vector<int> &spans,
+                      const std::vector<float> &knots) {
+  std::vector<torch::Tensor> basis;
+  basis.reserve(spans.size());
+
+  for (size_t i = 0; i < spans.size(); ++i) {
+    const int &span = spans[i];
+    const float &knot = knots[i];
+
+    const torch::Tensor current_basis_function =
+        basis_function_torch(degree, knot_vector, span, knot);
+
+    basis.emplace_back(current_basis_function);
+  }
+
+  return basis;
+}
+
+const torch::Tensor
+toTorchPoints(const int &degree_u, const int &degree_v, const int &size_u,
+              const int &size_v, const int &sample_num_u,
+              const int &sample_num_v, const float &start_u,
+              const float &start_v, const float &stop_u, const float &stop_v,
+              const torch::Tensor &knotvector_u,
+              const torch::Tensor &knotvector_v, const torch::Tensor &ctrlpts) {
   const std::vector<float> knots_u = linspace(start_u, stop_u, sample_num_u);
   const std::vector<float> knots_v = linspace(start_v, stop_v, sample_num_v);
 
+  const std::vector<float> knotvector_u_vec(knotvector_u.data_ptr<double>(),
+                                            knotvector_u.data_ptr<double>() +
+                                                knotvector_u.numel());
+  const std::vector<float> knotvector_v_vec(knotvector_v.data_ptr<double>(),
+                                            knotvector_v.data_ptr<double>() +
+                                                knotvector_v.numel());
+
   const std::vector<int> spans_u =
-      find_spans(degree_u, knotvector_u, size_u, knots_u);
+      find_spans(degree_u, knotvector_u_vec, size_u, knots_u);
   const std::vector<int> spans_v =
-      find_spans(degree_v, knotvector_v, size_v, knots_v);
+      find_spans(degree_v, knotvector_v_vec, size_v, knots_v);
 
-  const std::vector<std::vector<float>> basis_u =
-      basis_functions(degree_u, knotvector_u, spans_u, knots_u);
+  const std::vector<torch::Tensor> basis_u =
+      basis_functions_torch(degree_u, knotvector_u, spans_u, knots_u);
 
-  const std::vector<std::vector<float>> basis_v =
-      basis_functions(degree_v, knotvector_v, spans_v, knots_v);
+  const std::vector<torch::Tensor> basis_v =
+      basis_functions_torch(degree_v, knotvector_v, spans_v, knots_v);
 
   const torch::TensorOptions opts =
       torch::TensorOptions().dtype(ctrlpts.dtype()).device(ctrlpts.device());

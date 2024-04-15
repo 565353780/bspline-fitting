@@ -2,6 +2,44 @@ import torch
 import bs_fit_cpp
 
 
+def basis_function_torch(degree, knot_vector, span, knot):
+    dtype = knot_vector.dtype
+    device = knot_vector.device
+
+    left = torch.zeros([degree + 1], dtype=dtype).to(device)
+    right = torch.zeros([degree + 1], dtype=dtype).to(device)
+    N = torch.zeros([degree + 1], dtype=dtype).to(device)
+
+    for j in range(1, degree + 1):
+        left[j] = knot - knot_vector[span + 1 - j]
+        right[j] = knot_vector[span + j] - knot
+
+        saved = torch.zeros([1], dtype=dtype).to(device)
+
+        for r in range(j):
+            temp = N[r] / (right[r + 1] + left[j - r])
+            N[r] = saved + right[r + 1] * temp
+            saved = left[j - r] * temp
+
+        N[j] = saved
+
+    return N
+
+
+def basis_functions_torch(degree, knot_vector, spans, knots):
+    basis = []
+
+    for i in range(len(spans)):
+        span = spans[i]
+        knot = knots[i]
+
+        current_basis_function = basis_function_torch(degree, knot_vector, span, knot)
+
+        basis.append(current_basis_function)
+
+    return basis
+
+
 def toTorchPoints(
     degree_u,
     degree_v,
@@ -19,12 +57,22 @@ def toTorchPoints(
 ) -> torch.Tensor:
     knots_u = bs_fit_cpp.linspace(start_u, stop_u, sample_num_u)
     knots_v = bs_fit_cpp.linspace(start_v, stop_v, sample_num_v)
+    print("finish get knots_u")
 
-    spans_u = bs_fit_cpp.find_spans(degree_u, knotvector_u, size_u, knots_u)
-    spans_v = bs_fit_cpp.find_spans(degree_v, knotvector_v, size_v, knots_v)
+    knotvector_u_vec = knotvector_u.detach().clone().numpy().tolist()
+    knotvector_v_vec = knotvector_v.detach().clone().numpy().tolist()
+    print("finish get knotvector_u_vec")
 
-    basis_u = bs_fit_cpp.basis_functions(degree_u, knotvector_u, spans_u, knots_u)
-    basis_v = bs_fit_cpp.basis_functions(degree_v, knotvector_v, spans_v, knots_v)
+    spans_u = bs_fit_cpp.find_spans(degree_u, knotvector_u_vec, size_u, knots_u)
+    spans_v = bs_fit_cpp.find_spans(degree_v, knotvector_v_vec, size_v, knots_v)
+    print("finish get spans_u")
+
+    basis_u = basis_functions_torch(degree_u, knotvector_u, spans_u, knots_u)
+    basis_v = basis_functions_torch(degree_v, knotvector_v, spans_v, knots_v)
+    print("finish get basis_u")
+    print(basis_u)
+    print(basis_v)
+    exit()
 
     dtype = ctrlpts.dtype
     device = ctrlpts.device
