@@ -18,6 +18,7 @@ pip install -U torch torchvision torchaudio
 
 cd ../bspline-fitting
 ./compile.sh
+./ccompile.sh
 
 pip install -U tqdm tensorboard matplotlib gradio plotly
 
