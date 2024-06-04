@@ -361,6 +361,9 @@ class Trainer(object):
         if isinstance(gt_points, list) or isinstance(gt_points, tuple):
             gt_points = np.array(gt_points)
 
+        if len(gt_points.shape) == 1:
+            gt_points = gt_points.reshape(-1, 3)
+
         gt_pcd = o3d.geometry.PointCloud()
         gt_pcd.points = o3d.utility.Vector3dVector(gt_points)
         target_sample_point_num = (
@@ -380,6 +383,15 @@ class Trainer(object):
         min_point = np.min(gt_points, axis=0)
         center = (max_point + min_point) / 2.0
         scale = np.max(max_point - min_point)
+
+        if scale == 0.0:
+            print('[Trainer::autoTrainBSplineSurface]')
+            print('\t the input points are all the same point!')
+
+            self.bspline_surface.ctrlpts.data[:, 0] = gt_points[0][0]
+            self.bspline_surface.ctrlpts.data[:, 1] = gt_points[0][1]
+            self.bspline_surface.ctrlpts.data[:, 2] = gt_points[0][2]
+            return True
 
         gt_points = (gt_points - center) / scale
 

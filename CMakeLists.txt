@@ -29,6 +29,7 @@ include_directories(./bspline_fitting/Cpp/include)
 set(SRC
   ./bspline_fitting/Cpp/src/value.cpp
   ./bspline_fitting/Cpp/src/value_torch.cpp
+  ./bspline_fitting/Cpp/src/trainer.cpp
 )
 
 add_executable(${PROJECT_NAME} ./bspline_fitting/Cpp/main.cpp ${SRC})
