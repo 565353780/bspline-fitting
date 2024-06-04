@@ -48,7 +48,10 @@ const bool Trainer::toBSplineSurface(const std::vector<float> &sample_points) {
   }
 
   py::print("start autoTrainBSplineSurface");
-  trainer_.attr("autoTrainBSplineSurface")("gt_points"_a = sample_point_list);
+  const bool success =
+      trainer_
+          .attr("autoTrainBSplineSurface")("gt_points"_a = sample_point_list)
+          .cast<bool>();
 
-  return true;
+  return success;
 }
