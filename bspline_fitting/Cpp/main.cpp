@@ -48,5 +48,32 @@ int main() {
     return -1;
   }
 
+  // get bspline surface params
+  const std::vector<float> knots_u = trainer.getKNotsU();
+  const std::vector<float> knots_v = trainer.getKNotsV();
+  const std::vector<float> ctrl_pts = trainer.getCtrlPts();
+
+  // output bspline surface params
+  std::cout << "knots_u:" << std::endl;
+  for (int i = 0; i < knots_u.size(); ++i) {
+    std::cout << knots_u[i] << ',';
+  }
+  std::cout << std::endl;
+
+  std::cout << "knots_v:" << std::endl;
+  for (int i = 0; i < knots_v.size(); ++i) {
+    std::cout << knots_v[i] << ',';
+  }
+  std::cout << std::endl;
+
+  std::cout << "ctrl_pts:" << std::endl;
+  for (int i = 0; i < ctrl_pts.size(); ++i) {
+    std::cout << ctrl_pts[i] << ',';
+    if (i % 3 == 2) {
+      std::cout << std::endl;
+    }
+  }
+
+  std::cout << "finished running main!" << std::endl;
   return 1;
 }

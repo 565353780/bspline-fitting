@@ -23,6 +23,10 @@ public:
 
   const bool toBSplineSurface(const std::vector<float> &sample_points);
 
+  const std::vector<float> getKNotsU();
+  const std::vector<float> getKNotsV();
+  const std::vector<float> getCtrlPts();
+
 private:
   py::scoped_interpreter guard_{};
 

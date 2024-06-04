@@ -55,3 +55,41 @@ const bool Trainer::toBSplineSurface(const std::vector<float> &sample_points) {
 
   return success;
 }
+
+const std::vector<float> Trainer::getKNotsU() {
+  py::list list = trainer_.attr("bspline_surface").attr("toKNotsUList")();
+
+  std::vector<float> knots_u;
+  knots_u.reserve(list.size());
+
+  for (int i = 0; i < list.size(); ++i) {
+    knots_u.emplace_back(list[i].cast<float>());
+  }
+
+  return knots_u;
+}
+
+const std::vector<float> Trainer::getKNotsV() {
+  py::list list = trainer_.attr("bspline_surface").attr("toKNotsVList")();
+
+  std::vector<float> knots_v;
+  knots_v.reserve(list.size());
+
+  for (int i = 0; i < list.size(); ++i) {
+    knots_v.emplace_back(list[i].cast<float>());
+  }
+
+  return knots_v;
+}
+const std::vector<float> Trainer::getCtrlPts() {
+  py::list list = trainer_.attr("bspline_surface").attr("toCtrlPtsList")();
+
+  std::vector<float> ctrl_pts;
+  ctrl_pts.reserve(list.size());
+
+  for (int i = 0; i < list.size(); ++i) {
+    ctrl_pts.emplace_back(list[i].cast<float>());
+  }
+
+  return ctrl_pts;
+}
