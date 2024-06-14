@@ -1,8 +1,14 @@
 import numpy as np
 from typing import Union
 
-from geomdl import BSpline
-
+geomdl_exist = False
+try:
+    from geomdl.BSpline import Surface
+    geomdl_exist = True
+except:
+    class Surface(object):
+        def __init__(self) -> None:
+            return
 
 def compute_params_curve(points, centripetal=False):
     num_points = points.shape[0]
@@ -184,7 +190,12 @@ def approximate_surface(
     use_centripetal: bool = False,
     ctrlpts_size_u: Union[int, None] = None,
     ctrlpts_size_v: Union[int, None] = None,
-) -> BSpline.Surface:
+) -> Surface:
+    if not geomdl_exist:
+        print('[ERROR][fitting::approximate_surface]')
+        print('\t geomdl not exist! please install it first!')
+        return Surface()
+
     num_cpts_u = size_u - 1
     num_cpts_v = size_v - 1
 
@@ -300,7 +311,7 @@ def approximate_surface(
             for j in range(1, num_cpts_v - 1):
                 ctrlpts[j + (num_cpts_v * i), d] = x[j - 1]
 
-    surf = BSpline.Surface()
+    surf = Surface()
     surf.degree_u = degree_u
     surf.degree_v = degree_v
     surf.ctrlpts_size_u = num_cpts_u
