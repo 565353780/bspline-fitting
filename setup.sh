@@ -1,8 +1,8 @@
-cd ..
-git clone https://github.com/565353780/geom-dl.git
+# cd ..
+# git clone https://github.com/565353780/geom-dl.git
 
-cd geom-dl
-./setup.sh
+# cd geom-dl
+# ./setup.sh
 
 if [ "$(uname)" == "Darwin" ]; then
 	brew install bear
