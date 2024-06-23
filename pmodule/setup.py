@@ -5,10 +5,16 @@ from setuptools import find_packages, setup
 from torch.utils.cpp_extension import CUDAExtension, CppExtension, BuildExtension
 
 
-bs_fit_root_path = os.getcwd() + "/../bspline-fitting/bspline_fitting/Cpp/"
+bs_fit_root_path = os.getcwd() + "/../"
 bs_fit_src_path = bs_fit_root_path + "src/"
 bs_fit_sources = glob.glob(bs_fit_src_path + "*.cpp")
 bs_fit_include_dirs = [bs_fit_root_path + "include"]
+
+safe_bs_fit_sources = []
+for source in bs_fit_sources:
+    if 'main.cpp' in source:
+        continue
+    safe_bs_fit_sources.append(source)
 
 bs_fit_extra_compile_args = [
     "-O3",
@@ -21,7 +27,7 @@ bs_fit_extra_compile_args = [
 if torch.cuda.is_available():
     os.environ["TORCH_CUDA_ARCH_LIST"] = "6.0;6.1;6.2;7.0;7.5;8.0;8.6;8.9"
 
-    bs_fit_sources += glob.glob(bs_fit_src_path + "*.cu")
+    safe_bs_fit_sources += glob.glob(bs_fit_src_path + "*.cu")
 
     extra_compile_args = {
         "cxx": bs_fit_extra_compile_args + ["-DUSE_CUDA"],
@@ -35,7 +41,7 @@ if torch.cuda.is_available():
 
     bs_fit_module = CUDAExtension(
         name="bs_fit_cpp",
-        sources=bs_fit_sources,
+        sources=safe_bs_fit_sources,
         include_dirs=bs_fit_include_dirs,
         extra_compile_args=extra_compile_args,
     )
@@ -43,7 +49,7 @@ if torch.cuda.is_available():
 else:
     bs_fit_module = CppExtension(
         name="bs_fit_cpp",
-        sources=bs_fit_sources,
+        sources=safe_bs_fit_sources,
         include_dirs=bs_fit_include_dirs,
         extra_compile_args=bs_fit_extra_compile_args,
     )

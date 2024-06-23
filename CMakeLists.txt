@@ -24,15 +24,15 @@ link_directories(${REL_PATH}/Lib/AMCAXOCCTIO/bin)
 link_directories(${REL_PATH}/Lib/AMCAXPart/lib)
 link_directories(${REL_PATH}/Lib/AMCAXOCCTIO/lib)
 
-include_directories(./bspline_fitting/Cpp/include)
+include_directories(./include)
 
 set(SRC
-  ./bspline_fitting/Cpp/src/value.cpp
-  ./bspline_fitting/Cpp/src/value_torch.cpp
-  ./bspline_fitting/Cpp/src/trainer.cpp
+  ./src/value.cpp
+  ./src/value_torch.cpp
+  ./src/trainer.cpp
 )
 
-add_executable(${PROJECT_NAME} ./bspline_fitting/Cpp/main.cpp ${SRC})
+add_executable(${PROJECT_NAME} ./src/main.cpp ${SRC})
 
 find_library(TORCH_PYTHON_LIBRARY torch_python PATH "${TORCH_INSTALL_PREFIX}/lib")
 

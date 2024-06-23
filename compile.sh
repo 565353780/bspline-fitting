@@ -12,6 +12,7 @@ export MAX_JOBS=${PROCESSOR_NUM}
 # rm -rf ../bspline-fitting/*.egg-info
 # rm ../bspline-fitting/*.so
 
+cd pmodule
 #bear -- python setup.py build_ext --inplace
 python setup.py build_ext --inplace
 mv compile_commands.json build
