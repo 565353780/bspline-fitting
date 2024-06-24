@@ -26,11 +26,7 @@ link_directories(${REL_PATH}/Lib/AMCAXOCCTIO/lib)
 
 include_directories(./include)
 
-set(SRC
-  ./src/value.cpp
-  ./src/value_torch.cpp
-  ./src/trainer.cpp
-)
+file(GLOB_RECURSE SRC ./src/*.cpp)
 
 add_executable(${PROJECT_NAME} ./src/main.cpp ${SRC})
 

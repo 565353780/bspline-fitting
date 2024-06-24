@@ -1,11 +1,13 @@
+#include "bspline_surface.h"
 #include "trainer.h"
 #include <iostream>
 
 int main() {
+  BSplineSurface bsf = BSplineSurface();
+
   // input super params
-  const std::string root_path = "../../bspline-fitting/";
-  const int degree_u = 2;
-  const int degree_v = 2;
+  const int degree_u = 3;
+  const int degree_v = 3;
   const int size_u = 7;
   const int size_v = 7;
   const int sample_num_u = 20;
@@ -14,6 +16,8 @@ int main() {
   const float start_v = 0.0;
   const float stop_u = 1.0;
   const float stop_v = 1.0;
+  const std::string idx_dtype = "int64";
+  const std::string dtype = "float32";
   const std::string device = "cpu";
   const int warm_epoch_step_num = 20;
   const int warm_epoch_num = 4;
@@ -36,22 +40,18 @@ int main() {
   }
 
   // construct Trainer class
-  Trainer trainer(root_path, degree_u, degree_v, size_u, size_v, sample_num_u,
-                  sample_num_v, start_u, start_v, stop_u, stop_v, device,
-                  warm_epoch_step_num, warm_epoch_num, finetune_step_num, lr,
-                  weight_decay, factor, patience, min_lr);
+  Trainer trainer(degree_u, degree_v, size_u, size_v, sample_num_u,
+                  sample_num_v, start_u, start_v, stop_u, stop_v, idx_dtype,
+                  dtype, device, warm_epoch_step_num, warm_epoch_num,
+                  finetune_step_num, lr, weight_decay, factor, patience,
+                  min_lr);
 
-  // auto fit bspline surface
-  const bool success = trainer.toBSplineSurface(sample_points);
-  if (!success) {
-    std::cout << "toBSplineSurface failed!" << std::endl;
-    return -1;
-  }
+  trainer.autoTrainBSplineSurface(sample_points);
 
   // get bspline surface params
-  const std::vector<float> knots_u = trainer.getKNotsU();
-  const std::vector<float> knots_v = trainer.getKNotsV();
-  const std::vector<float> ctrl_pts = trainer.getCtrlPts();
+  const std::vector<float> knots_u = trainer.toKNotsU();
+  const std::vector<float> knots_v = trainer.toKNotsV();
+  const std::vector<float> ctrl_pts = trainer.toCtrlPts();
 
   // output bspline surface params
   std::cout << "knots_u:" << std::endl;

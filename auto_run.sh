@@ -1,2 +1,2 @@
-./ccompile.sh
+./compile.sh
 ./run.sh
