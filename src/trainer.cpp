@@ -158,8 +158,9 @@ const bool Trainer::trainBSplineSurface(torch::optim::AdamW &optimizer,
       break;
     }
 
-    std::cout << "\r \t\t optimizing at step " << i + 1 << "/"
-              << finetune_step_num_ << " ...    ";
+    std::cout << "\t\t optimizing at step " << i + 1 << "/"
+              << finetune_step_num_ << "\tLoss=" << loss
+              << "\tLr=" << getLr(optimizer) << std::endl;
   }
 
   std::cout << std::endl;
@@ -168,16 +169,17 @@ const bool Trainer::trainBSplineSurface(torch::optim::AdamW &optimizer,
 }
 
 const bool Trainer::autoTrainBSplineSurface(std::vector<float> &gt_points_vec) {
-  std::cout << bspline_surface_.knotvector_u_.sizes() << std::endl;
-  std::cout << bspline_surface_.knotvector_v_.sizes() << std::endl;
-  std::cout << bspline_surface_.ctrlpts_.sizes() << std::endl;
-  return true;
-
   torch::Tensor gt_points =
       torch::from_blob(gt_points_vec.data(), {long(gt_points_vec.size())},
-                       bspline_surface_.opts_)
+                       torch::TensorOptions()
+                           .dtype(bspline_surface_.dtype_)
+                           .device(torch::kCPU))
           .clone()
           .reshape({-1, 3});
+
+  if (bspline_surface_.device_ == torch::kCUDA) {
+    gt_points = gt_points.cuda();
+  }
 
   const torch::Tensor max_point = std::get<0>(torch::max(gt_points, 0));
   const torch::Tensor min_point = std::get<0>(torch::min(gt_points, 0));
@@ -211,11 +213,15 @@ const bool Trainer::autoTrainBSplineSurface(std::vector<float> &gt_points_vec) {
                            0.5;
 
   for (int i = 0; i < bspline_surface_.size_u_ - 1; ++i) {
-    ctrlpts.index_put_({Slice(None), i, 0}, u_values);
+    ctrlpts.index_put_(
+        {Slice(None), i, 0},
+        u_values.toType(bspline_surface_.dtype_).to(bspline_surface_.device_));
   }
 
   for (int i = 0; i < bspline_surface_.size_v_ - 1; ++i) {
-    ctrlpts.index_put_({i, Slice(None), 1}, v_values);
+    ctrlpts.index_put_(
+        {i, Slice(None), 1},
+        v_values.toType(bspline_surface_.dtype_).to(bspline_surface_.device_));
   }
 
   ctrlpts = ctrlpts.reshape({-1, 3}) * 0.4;

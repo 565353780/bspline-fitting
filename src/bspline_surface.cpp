@@ -86,14 +86,15 @@ const bool BSplineSurface::updateSetting(
 }
 
 const bool BSplineSurface::setGradState(const bool &need_grad) {
-  knotvector_u_.set_requires_grad(need_grad);
-  knotvector_v_.set_requires_grad(need_grad);
-  ctrlpts_.set_requires_grad(need_grad);
+  knotvector_u_ = knotvector_u_.set_requires_grad(need_grad);
+  knotvector_v_ = knotvector_v_.set_requires_grad(need_grad);
+  ctrlpts_ = ctrlpts_.set_requires_grad(need_grad);
+
   return true;
 }
 
 const bool BSplineSurface::loadCtrlPts(const torch::Tensor &ctrlpts) {
-  ctrlpts_ = ctrlpts.detach().clone().toType(idx_dtype_).to(device_);
+  ctrlpts_ = ctrlpts.detach().clone().toType(dtype_).to(device_);
   return true;
 }
 

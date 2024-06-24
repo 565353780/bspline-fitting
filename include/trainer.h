@@ -52,7 +52,7 @@ public:
 
   const bool isValid() { return bspline_surface_.isValid(); }
 
-private:
+public:
   BSplineSurface bspline_surface_;
 
   // super params

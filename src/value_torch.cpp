@@ -3,7 +3,7 @@
 
 const std::vector<torch::Tensor>
 basis_function_torch(const int &degree, const torch::Tensor &knot_vector,
-                     const int &span, const double &knot) {
+                     const int &span, const float &knot) {
   const torch::TensorOptions opts = torch::TensorOptions()
                                         .dtype(knot_vector.dtype())
                                         .device(knot_vector.device());
@@ -33,13 +33,13 @@ basis_function_torch(const int &degree, const torch::Tensor &knot_vector,
 const std::vector<std::vector<torch::Tensor>>
 basis_functions_torch(const int &degree, const torch::Tensor &knot_vector,
                       const std::vector<int> &spans,
-                      const std::vector<double> &knots) {
+                      const std::vector<float> &knots) {
   std::vector<std::vector<torch::Tensor>> basis;
   basis.reserve(spans.size());
 
   for (size_t i = 0; i < spans.size(); ++i) {
     const int &span = spans[i];
-    const double &knot = knots[i];
+    const float &knot = knots[i];
 
     const std::vector<torch::Tensor> current_basis_function =
         basis_function_torch(degree, knot_vector, span, knot);
@@ -53,19 +53,22 @@ basis_functions_torch(const int &degree, const torch::Tensor &knot_vector,
 const torch::Tensor
 toTorchPoints(const int &degree_u, const int &degree_v, const int &size_u,
               const int &size_v, const int &sample_num_u,
-              const int &sample_num_v, const double &start_u,
-              const double &start_v, const double &stop_u, const double &stop_v,
+              const int &sample_num_v, const float &start_u,
+              const float &start_v, const float &stop_u, const float &stop_v,
               const torch::Tensor &knotvector_u,
               const torch::Tensor &knotvector_v, const torch::Tensor &ctrlpts) {
-  const std::vector<double> knots_u = linspace(start_u, stop_u, sample_num_u);
-  const std::vector<double> knots_v = linspace(start_v, stop_v, sample_num_v);
+  const std::vector<float> knots_u = linspace(start_u, stop_u, sample_num_u);
+  const std::vector<float> knots_v = linspace(start_v, stop_v, sample_num_v);
 
-  const std::vector<double> knotvector_u_vec(knotvector_u.data_ptr<double>(),
-                                             knotvector_u.data_ptr<double>() +
-                                                 knotvector_u.numel());
-  const std::vector<double> knotvector_v_vec(knotvector_v.data_ptr<double>(),
-                                             knotvector_v.data_ptr<double>() +
-                                                 knotvector_v.numel());
+  const torch::Tensor knotvector_u_cpu = knotvector_u.detach().clone().cpu();
+  const torch::Tensor knotvector_v_cpu = knotvector_v.detach().clone().cpu();
+
+  const std::vector<float> knotvector_u_vec(knotvector_u_cpu.data_ptr<float>(),
+                                            knotvector_u_cpu.data_ptr<float>() +
+                                                knotvector_u_cpu.numel());
+  const std::vector<float> knotvector_v_vec(knotvector_v_cpu.data_ptr<float>(),
+                                            knotvector_v_cpu.data_ptr<float>() +
+                                                knotvector_v_cpu.numel());
 
   const std::vector<int> spans_u =
       find_spans(degree_u, knotvector_u_vec, size_u, knots_u);

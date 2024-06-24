@@ -1,13 +1,18 @@
 #include "bspline_surface.h"
 #include "trainer.h"
+#include <ATen/Parallel.h>
 #include <iostream>
+#include <torch/csrc/api/include/torch/utils.h>
+#include <torch/cuda.h>
 
 int main() {
+  torch::set_num_threads(16);
+
   BSplineSurface bsf = BSplineSurface();
 
   // input super params
-  const int degree_u = 3;
-  const int degree_v = 3;
+  const int degree_u = 2;
+  const int degree_v = 2;
   const int size_u = 7;
   const int size_v = 7;
   const int sample_num_u = 20;
@@ -24,11 +29,18 @@ int main() {
   const int finetune_step_num = 400;
   const float lr = 5e-2;
   const float weight_decay = 1e-4;
-  const float factor = 0.9;
-  const int patience = 1;
+  const float factor = 0.8;
+  const int patience = 4;
   const float min_lr = 1e-3;
   const std::string save_result_folder_path = "auto";
   const std::string save_log_folder_path = "auto";
+
+  std::string real_device = device;
+  if (!torch::cuda::is_available()) {
+    std::cout << "[WARN][main::main]" << std::endl;
+    std::cout << "\t cuda is not available! will use cpu!" << std::endl;
+    real_device = "cpu";
+  }
 
   // input point cloud [x1, y1, z1, x2, y2, z2, ...]
   std::vector<float> sample_points;
@@ -42,7 +54,7 @@ int main() {
   // construct Trainer class
   Trainer trainer(degree_u, degree_v, size_u, size_v, sample_num_u,
                   sample_num_v, start_u, start_v, stop_u, stop_v, idx_dtype,
-                  dtype, device, warm_epoch_step_num, warm_epoch_num,
+                  dtype, real_device, warm_epoch_step_num, warm_epoch_num,
                   finetune_step_num, lr, weight_decay, factor, patience,
                   min_lr);
 

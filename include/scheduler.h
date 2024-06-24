@@ -28,7 +28,7 @@ public:
       float old_lr = param_group.options().get_lr();
       float new_lr = std::max(old_lr * factor_, min_lr_);
       param_group.options().set_lr(new_lr);
-      std::cout << "Adjusting learning rate to: " << new_lr << std::endl;
+      // std::cout << "Adjusting learning rate to: " << new_lr << std::endl;
     }
   }
 
