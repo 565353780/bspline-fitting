@@ -1,9 +1,6 @@
 #include "bspline_surface.h"
 #include "trainer.h"
-#include <ATen/Parallel.h>
 #include <iostream>
-#include <torch/csrc/api/include/torch/utils.h>
-#include <torch/cuda.h>
 
 int main() {
   torch::set_num_threads(16);
